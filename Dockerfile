@@ -28,4 +28,4 @@ ENV PORT=8080
 
 EXPOSE 8080
 
-CMD ["./entrypoint.sh", "run"]
+CMD ["sh", "./entrypoint.sh", "run"]

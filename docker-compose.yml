@@ -7,8 +7,6 @@ services:
       POSTGRES_USER: roxy
       POSTGRES_PASSWORD: roxy
       POSTGRES_DB: roxy
-    ports:
-      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -29,11 +27,17 @@ services:
       - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
 
   minio-init:
     image: minio/mc:latest
     depends_on:
-      - minio
+      minio:
+        condition: service_healthy
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |

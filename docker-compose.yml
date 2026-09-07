@@ -1,0 +1,69 @@
+name: roxy
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: roxy
+      POSTGRES_PASSWORD: roxy
+      POSTGRES_DB: roxy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U roxy -d roxy"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: roxy
+      MINIO_ROOT_PASSWORD: roxy-dev-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  minio-init:
+    image: minio/mc:latest
+    depends_on:
+      - minio
+    restart: on-failure
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        sleep 3
+        mc alias set local http://minio:9000 roxy roxy-dev-minio
+        mc mb --ignore-existing local/roxy
+
+  backend:
+    profiles: ["stack"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    ports:
+      - "8080:8080"
+    environment:
+      DATABASE_URL: postgres://roxy:roxy@postgres:5432/roxy
+      HOST: "0.0.0.0"
+      PORT: "8080"
+      SECRET_KEY_BASE: "dev-only-secret-key-base-change-me-please-not-for-prod-xxxx"
+      S3_ENDPOINT: http://minio:9000
+      S3_BUCKET: roxy
+      S3_ACCESS_KEY: roxy
+      S3_SECRET_KEY: roxy-dev-minio
+
+volumes:
+  postgres_data:
+  minio_data:

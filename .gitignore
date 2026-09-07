@@ -1,0 +1,7 @@
+.env
+.DS_Store
+**/build/
+**/dist/
+backend/priv/static/*
+!backend/priv/static/.gitkeep
+erl_crash.dump

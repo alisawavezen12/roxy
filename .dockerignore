@@ -1,0 +1,8 @@
+**/build
+**/dist
+**/.git
+**/.env
+чек лист.md
+frontend/priv
+backend/priv/static/*
+!backend/priv/static/.gitkeep

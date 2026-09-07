@@ -1,46 +1,22 @@
+
 import gleam/dynamic/decode
-import gleam/http.{Get}
-import gleam/json
+
+
+
 import lustre/attribute
 import lustre/element
 import lustre/element/html
 import pog
 import shared
 import shared/health.{type Health, Health}
-import wisp.{type Request, type Response}
+import wisp.{type Response}
 
 pub type Context {
   Context(db: pog.Connection, static_directory: String)
 }
 
-pub fn handle_request(req: Request, ctx: Context) -> Response {
-  use req <- middleware(req, ctx.static_directory)
 
-  case req.method, wisp.path_segments(req) {
-    Get, ["api", "health"] -> health_response(ctx)
-    _, ["api", ..] ->
-      json.object([#("error", json.string("not_found"))])
-      |> json.to_string
-      |> wisp.json_response(404)
-    Get, [] -> serve_index()
-    _, _ -> wisp.not_found()
-  }
-}
-
-fn middleware(
-  req: Request,
-  static_directory: String,
-  handle: fn(Request) -> Response,
-) -> Response {
-  let req = wisp.method_override(req)
-  use <- wisp.log_request(req)
-  use <- wisp.rescue_crashes
-  use req <- wisp.handle_head(req)
-  use <- wisp.serve_static(req, under: "/static", from: static_directory)
-  handle(req)
-}
-
-fn health_response(ctx: Context) -> Response {
+pub fn health_response(ctx: Context) -> Response {
   let db_status = case ping_db(ctx.db) {
     Ok(_) -> "ok"
     Error(_) -> "error"
@@ -75,7 +51,7 @@ fn ping_db(db: pog.Connection) -> Result(Nil, Nil) {
   }
 }
 
-fn serve_index() -> Response {
+pub fn serve_index() -> Response {
   html.html([attribute.lang("ru")], [
     html.head([], [
       html.meta([attribute.charset("utf-8")]),

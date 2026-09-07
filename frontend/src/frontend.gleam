@@ -57,7 +57,7 @@ fn view(model: Model) -> Element(Message) {
     html.style([], css),
     html.header([attribute.class("top")], [
       html.p([attribute.class("mark")], [html.text("Roxy")]),
-      html.div([attribute.class("switch"), attribute.role("radiogroup")], [
+      html.div([attribute.class("switch"), attribute.role("group")], [
         surface_button("Стена", model.surface == Wall, UserOpenedWall),
         surface_button("Доска", model.surface == Board, UserOpenedBoard),
       ]),
@@ -75,8 +75,7 @@ fn surface_button(
   html.button(
     [
       attribute.type_("button"),
-      attribute.role("radio"),
-      attribute.aria_checked(case active {
+      attribute.aria_pressed(case active {
         True -> "true"
         False -> "false"
       }),
@@ -108,7 +107,7 @@ fn view_health(health: Option(Result(Health, Nil))) -> Element(Message) {
     None -> "проверяю backend…"
     Some(Ok(status)) if status.db == "ok" -> "postgres ок"
     Some(Ok(_)) -> "backend жив, postgres недоступен"
-    Some(Error(_)) -> "backend недоступен"
+    Some(Error(_)) -> "API недоступен или не готов (возможна ошибка БД)"
   }
 
   html.p([], [html.text(text)])

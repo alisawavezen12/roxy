@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: roxy
       POSTGRES_DB: roxy
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -25,8 +25,8 @@ services:
       MINIO_ROOT_USER: roxy
       MINIO_ROOT_PASSWORD: roxy-dev-minio
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     volumes:
       - minio_data:/data
 
@@ -34,13 +34,19 @@ services:
     image: minio/mc:latest
     depends_on:
       - minio
-    restart: on-failure
     entrypoint: ["/bin/sh", "-c"]
     command:
       - |
-        sleep 3
-        mc alias set local http://minio:9000 roxy roxy-dev-minio
-        mc mb --ignore-existing local/roxy
+        set -eu
+        for attempt in 1 2 3 4 5 6 7 8 9 10; do
+          if mc alias set local http://minio:9000 roxy roxy-dev-minio &&
+             mc mb --ignore-existing local/roxy; then
+            exit 0
+          fi
+          sleep 3
+        done
+        echo "Failed to create the MinIO bucket after 10 attempts" >&2
+        exit 1
 
   backend:
     profiles: ["stack"]
@@ -50,10 +56,10 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      minio:
-        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     environment:
       DATABASE_URL: postgres://roxy:roxy@postgres:5432/roxy
       HOST: "0.0.0.0"

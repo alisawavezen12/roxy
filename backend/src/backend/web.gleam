@@ -6,7 +6,7 @@ import lustre/element
 import lustre/element/html
 import pog
 import shared
-import shared/health.{Health}
+import shared/health.{type Health, Health}
 import wisp.{type Request, type Response}
 
 pub type Context {
@@ -46,8 +46,17 @@ fn health_response(ctx: Context) -> Response {
     Error(_) -> "error"
   }
   Health(ok: db_status == "ok", db: db_status, service: shared.app_name)
+  |> readiness_response
+}
+
+pub fn readiness_response(status: Health) -> Response {
+  let code = case status.ok {
+    True -> 200
+    False -> 503
+  }
+  status
   |> health.to_string
-  |> wisp.json_response(200)
+  |> wisp.json_response(code)
 }
 
 fn ping_db(db: pog.Connection) -> Result(Nil, Nil) {

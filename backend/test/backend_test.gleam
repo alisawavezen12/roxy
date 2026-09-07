@@ -1,13 +1,20 @@
+import backend/web
 import gleeunit
+import shared
+import shared/health.{Health}
 
 pub fn main() -> Nil {
   gleeunit.main()
 }
 
-// gleeunit test functions end in `_test`
-pub fn hello_world_test() {
-  let name = "Joe"
-  let greeting = "Hello, " <> name <> "!"
+pub fn healthy_database_returns_200_test() {
+  let response =
+    web.readiness_response(Health(ok: True, db: "ok", service: shared.app_name))
+  assert response.status == 200
+}
 
-  assert greeting == "Hello, Joe!"
+pub fn unavailable_database_returns_503_test() {
+  let response =
+    web.readiness_response(Health(ok: False, db: "error", service: shared.app_name))
+  assert response.status == 503
 }

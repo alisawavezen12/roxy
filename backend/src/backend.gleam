@@ -45,10 +45,7 @@ fn database_config(pool_name: process.Name(pog.Message)) -> pog.Config {
 }
 
 fn secret_key_base() -> String {
-  envoy.get("SECRET_KEY_BASE")
-  |> result.unwrap(
-    "dev-only-secret-key-base-change-me-please-not-for-prod-xxxx",
-  )
+  require_env("SECRET_KEY_BASE")
 }
 
 fn host() -> String {
@@ -64,6 +61,7 @@ fn port() -> Int {
 
 fn require_env(name: String) -> String {
   case envoy.get(name) {
+    Ok("") -> panic as { name <> " must not be empty" }
     Ok(value) -> value
     Error(_) -> panic as { name <> " is required" }
   }

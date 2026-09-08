@@ -1,0 +1,29 @@
+ARG GLEAM_VERSION=v1.18.1
+ARG BUN_VERSION=1.2.22
+
+FROM oven/bun:${BUN_VERSION}-alpine AS bun
+
+FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine
+
+COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
+
+# Docker Desktop on Windows does not reliably forward bind-mount events to
+# Lustre's Bun watcher. Polling restarts the official Lustre dev workflow;
+# remove this wrapper if native bind-mount events become reliable.
+RUN apk add --no-cache watchexec
+
+WORKDIR /workspace
+
+COPY ./shared/gleam.toml ./shared/manifest.toml ./shared/
+COPY ./frontend/gleam.toml ./frontend/manifest.toml ./frontend/
+
+RUN cd /workspace/shared && gleam deps download
+RUN cd /workspace/frontend && gleam deps download
+
+COPY ./shared/src ./shared/src
+COPY ./frontend/src ./frontend/src
+COPY ./frontend/assets ./frontend/assets
+
+WORKDIR /workspace/frontend
+
+CMD ["watchexec", "--restart", "--poll", "1s", "--watch", "src", "--watch", "assets", "--watch", "../shared/src", "--", "gleam", "run", "-m", "lustre/dev", "start"]

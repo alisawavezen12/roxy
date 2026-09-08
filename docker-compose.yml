@@ -15,10 +15,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    stop_grace_period: 10s
 
   minio:
     image: minio/minio:latest
-    command: server /data --console-address ":9001"
+    command: ["server", "/data", "--console-address", ":9001"]
     environment:
       MINIO_ROOT_USER: roxy
       MINIO_ROOT_PASSWORD: roxy-dev-minio
@@ -32,8 +33,10 @@ services:
       interval: 3s
       timeout: 5s
       retries: 20
+    stop_grace_period: 10s
 
   minio-init:
+    profiles: ["setup"]
     image: minio/mc:latest
     depends_on:
       minio:
@@ -42,35 +45,8 @@ services:
     command:
       - |
         set -eu
-        for attempt in 1 2 3 4 5 6 7 8 9 10; do
-          if mc alias set local http://minio:9000 roxy roxy-dev-minio &&
-             mc mb --ignore-existing local/roxy; then
-            exit 0
-          fi
-          sleep 3
-        done
-        echo "Failed to create the MinIO bucket after 10 attempts" >&2
-        exit 1
-
-  backend:
-    profiles: ["stack"]
-    build:
-      context: .
-      dockerfile: Dockerfile
-    depends_on:
-      postgres:
-        condition: service_healthy
-    ports:
-      - "127.0.0.1:8080:8080"
-    environment:
-      DATABASE_URL: postgres://roxy:roxy@postgres:5432/roxy
-      HOST: "0.0.0.0"
-      PORT: "8080"
-      SECRET_KEY_BASE: "dev-only-secret-key-base-change-me-please-not-for-prod-xxxx"
-      S3_ENDPOINT: http://minio:9000
-      S3_BUCKET: roxy
-      S3_ACCESS_KEY: roxy
-      S3_SECRET_KEY: roxy-dev-minio
+        mc alias set local http://minio:9000 roxy roxy-dev-minio
+        mc mb --ignore-existing local/roxy
 
 volumes:
   postgres_data:

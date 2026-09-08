@@ -1,0 +1,21 @@
+ARG GLEAM_VERSION=v1.18.1
+
+FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine
+
+RUN apk add --no-cache watchexec
+
+WORKDIR /workspace
+
+COPY ./shared/gleam.toml ./shared/manifest.toml ./shared/
+COPY ./backend/gleam.toml ./backend/manifest.toml ./backend/
+
+RUN cd /workspace/shared && gleam deps download
+RUN cd /workspace/backend && gleam deps download
+
+COPY ./shared/src ./shared/src
+COPY ./backend/src ./backend/src
+COPY ./backend/test ./backend/test
+
+WORKDIR /workspace/backend
+
+CMD ["watchexec", "--restart", "--poll", "1s", "--watch", "src", "--watch", "../shared/src", "--exts", "gleam", "--", "gleam", "run"]

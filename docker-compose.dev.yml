@@ -1,0 +1,55 @@
+services:
+  backend:
+    image: roxy-backend-dev
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.dev
+    init: true
+    working_dir: /workspace/backend
+    volumes:
+      - ./backend/src:/workspace/backend/src
+      - ./backend/test:/workspace/backend/test
+      - ./shared/src:/workspace/shared/src:ro
+    ports:
+      - "127.0.0.1:8080:8080"
+    environment:
+      APP_ENV: development
+      DATABASE_URL: postgres://roxy:roxy@postgres:5432/roxy
+      HOST: "0.0.0.0"
+      PORT: "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--output-document=/dev/null", "http://127.0.0.1:8080/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 20s
+    restart: unless-stopped
+    stop_grace_period: 10s
+
+  frontend:
+    image: roxy-frontend-dev
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile.dev
+    init: true
+    working_dir: /workspace/frontend
+    volumes:
+      - ./frontend/src:/workspace/frontend/src
+      - ./frontend/assets:/workspace/frontend/assets
+      - ./shared/src:/workspace/shared/src:ro
+    ports:
+      - "127.0.0.1:1234:1234"
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--output-document=/dev/null", "http://127.0.0.1:1234/"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 30s
+    restart: unless-stopped
+    stop_grace_period: 10s

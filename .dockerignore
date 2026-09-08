@@ -1,8 +1,27 @@
-**/build
-**/dist
 **/.git
-**/.env
+**/build
+**/.lustre
+**/dist
+**/node_modules
+
+.zed
+.vscode
+.idea
+
+.env
+.env.*
+!.env.example
+
+**/tmp
+**/logs
+*.log
+erl_crash.dump
+
+backend/priv/static
+
+backend-production-checklist-gleam-wisp-mist.md
+backend/backend foundation checklist.md
+обучающий roadmap.md
+план разработки.md
 чек лист.md
-frontend/priv
-backend/priv/static/*
-!backend/priv/static/.gitkeep
+README.md

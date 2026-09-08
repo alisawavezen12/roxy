@@ -1,5 +1,5 @@
-import http/server
+import roxy_application
 
 pub fn main() -> Nil {
-  server.start()
+  roxy_application.start()
 }

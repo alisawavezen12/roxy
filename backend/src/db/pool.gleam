@@ -1,34 +1,25 @@
 import db/config as db_config
 import gleam/erlang/process
-import gleam/otp/static_supervisor as supervisor
 import gleam/result
 import pog
 
-pub fn start(
+pub fn build(
   config: db_config.PostgresConfig,
-) -> Result(pog.Connection, String) {
+) -> Result(#(pog.Connection, _), String) {
   let pool_name = process.new_name("roxy_postgres")
   use pool_config <- result.try(
     pog.url_config(pool_name, config.url)
     |> result.replace_error("Invalid DATABASE_URL"),
   )
 
-  let pool_config =
-    pool_config
-    |> pog.pool_size(config.pool_size)
-
-  let pool_child = pog.supervised(pool_config)
-  let assert Ok(_) =
-    supervisor.new(supervisor.OneForOne)
-    |> supervisor.add(pool_child)
-    |> supervisor.start
-
+  let pool_config = pog.pool_size(pool_config, config.pool_size)
   let connection = pog.named_connection(pool_name)
-  wait_until_ready(connection, 10)
-  |> result.replace(connection)
+  let pool_child = pog.supervised(pool_config)
+
+  Ok(#(connection, pool_child))
 }
 
-fn wait_until_ready(
+pub fn wait_until_ready(
   connection: pog.Connection,
   attempts: Int,
 ) -> Result(Nil, String) {

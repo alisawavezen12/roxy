@@ -21,15 +21,19 @@ Mist 6's `mist.supervised(builder)` starts the Mist supervisor child. The Wisp r
 
 The root supervisor is configured with `RestForOne` and `restart_tolerance(3, 10)`:
 
-- PostgreSQL failure restarts PostgreSQL and the later Mist child.
-- Mist failure restarts only Mist.
+- **PostgreSQL pool process failure** restarts the pool and the later Mist child.
+- **PostgreSQL server outage** does not necessarily terminate the pool process: `pog` can keep the pool alive and retry/reconnect, while queries fail until PostgreSQL recovers.
+- **Mist supervisor failure** restarts only Mist. A failure of an internal Mist worker is handled first by Mist's own supervision tree; the root sees it only if the Mist supervisor itself terminates.
 - More than three restarts in ten seconds terminates the root supervisor instead of allowing an infinite crash loop.
 
 ## Verified child failure behavior
 
-`test/otp/supervision_test.gleam` starts a permanent worker under a supervisor, terminates it abnormally, and verifies that a new child PID is registered. The test also emits the expected OTP supervisor report.
+`test/otp/supervision_test.gleam` contains two levels of verification:
 
-This verifies the basic restart contract used by the application tree. The full production DB/Mist failure path still requires an integration test with running services.
+- a permanent child restart test;
+- a concrete `RestForOne` test with fake DB and HTTP children. Killing DB changes both PIDs; killing HTTP changes only the HTTP PID.
+
+These are OTP policy tests, not a full production DB/Mist failure integration test.
 
 ## Graceful shutdown
 
@@ -38,7 +42,7 @@ The application tree owns both long-lived children:
 - `pog.supervised(pool_config)` owns the PostgreSQL pool;
 - `mist.supervised(builder)` owns Mist's listener/factory supervisors.
 
-When the root supervisor receives OTP shutdown, it stops children in reverse order: Mist first, then PostgreSQL. This prevents the HTTP layer from being torn down after its database dependency. Mist 6 exposes the supervised startup API used here; no separate public `mist.stop` function is required for this OTP-owned shutdown path.
+When the root supervisor receives OTP shutdown, it stops children in reverse order: Mist first, then PostgreSQL. This stops HTTP before PostgreSQL, so no new HTTP work can depend on a database pool that has already been shut down. Mist 6 exposes the supervised startup API used here; no separate public `mist.stop` function is required for this OTP-owned shutdown path.
 
 This is graceful at the OTP supervision boundary. Active client requests are governed by Mist's own child shutdown semantics and are not separately integration-tested yet.
 

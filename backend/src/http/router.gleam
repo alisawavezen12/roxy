@@ -5,6 +5,7 @@ import gleam/list
 import gleam/option
 import http/handlers/health
 import http/middleware/error_handler
+import http/protocol/limits
 import http/request_context
 import wisp
 
@@ -38,6 +39,10 @@ pub fn handle(
   dependencies: dependencies.Dependencies,
 ) -> wisp.Response {
   let context = request_context.new()
+  let request =
+    request
+    |> wisp.set_max_body_size(limits.max_body_size)
+    |> wisp.set_max_files_size(limits.max_files_size)
   let response =
     error_handler.handle(request, fn() {
       Ok(

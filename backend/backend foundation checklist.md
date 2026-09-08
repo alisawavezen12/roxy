@@ -289,10 +289,11 @@ logging wrapper finish
   - Входящий `X-Request-ID` игнорировать.
   - Использовать отдельный `RequestContext`, не `Dependencies`.
   - Возвращать ID в `X-Request-ID`.
-- [ ] Ограничить максимальный размер request body
+- [x] Ограничить максимальный размер request body
   - `max_body_size = 1 MiB` одинаково в development и production.
   - Route-specific override отложить до появления реальной необходимости.
-- [ ] Ограничить максимальный размер загружаемых файлов
+  - Значение вынесено в `http/protocol/limits.gleam`.
+- [x] Ограничить максимальный размер загружаемых файлов
   - `max_files_size = 32 MiB` суммарно на multipart request как future guard.
   - Не строить дополнительную upload-инфраструктуру до появления upload feature.
   - Per-file и image-count limits определить вместе с upload feature.

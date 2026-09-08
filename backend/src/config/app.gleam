@@ -1,53 +1,60 @@
+import config/defaults
+import config/environment
+import db/config as db_config
 import envoy
 import gleam/int
 import gleam/result
 import gleam/string
 
-pub type Environment {
-  Development
-  Production
-}
-
-pub type Config {
-  Config(
+pub type AppConfig {
+  AppConfig(
     host: String,
     port: Int,
-    environment: Environment,
+    environment: environment.Environment,
     secret_key_base: String,
+    postgres: db_config.PostgresConfig,
   )
 }
 
-pub fn load() -> Result(Config, String) {
-  let host = "0.0.0.0"
-  use port_string <- result.try(required("PORT", "8080"))
+pub fn load() -> Result(AppConfig, String) {
+  use environment <- result.try(environment.load())
+  let host = defaults.host
+  use port_string <- result.try(load_port(environment))
   use port <- result.try(parse_port(port_string))
-  use environment <- result.try(load_environment())
-  use secret_key_base <- result.try(required("SECRET_KEY_BASE", ""))
+  use secret_key_base <- result.try(load_secret(environment))
+  use postgres_config <- result.try(db_config.load(environment))
 
   case string.length(secret_key_base) >= 64 {
-    True -> Ok(Config(host:, port:, environment:, secret_key_base:))
+    True ->
+      Ok(AppConfig(
+        host:,
+        port:,
+        environment:,
+        secret_key_base:,
+        postgres: postgres_config,
+      ))
     False -> Error("SECRET_KEY_BASE must be at least 64 characters long")
   }
 }
 
-fn required(name: String, default: String) -> Result(String, String) {
-  case envoy.get(name) {
-    Ok(value) if value != "" -> Ok(value)
-    _ if default != "" -> Ok(default)
-    _ -> Error(name <> " environment variable is required")
+fn load_port(environment: environment.Environment) -> Result(String, String) {
+  case environment {
+    environment.Development -> Ok(int.to_string(defaults.port))
+    environment.Production -> required("PORT")
   }
 }
 
-fn load_environment() -> Result(Environment, String) {
-  let value = required("APP_ENV", "development")
-  case value {
-    Ok("development") -> Ok(Development)
-    Ok("production") -> Ok(Production)
-    Ok(environment) ->
-      Error(
-        "APP_ENV must be either development or production, got: " <> environment,
-      )
-    Error(error) -> Error(error)
+fn load_secret(environment: environment.Environment) -> Result(String, String) {
+  case environment {
+    environment.Development -> Ok(defaults.secret_key_base)
+    environment.Production -> required("SECRET_KEY_BASE")
+  }
+}
+
+fn required(name: String) -> Result(String, String) {
+  case envoy.get(name) {
+    Ok(value) if value != "" -> Ok(value)
+    _ -> Error(name <> " environment variable is required in production")
   }
 }
 

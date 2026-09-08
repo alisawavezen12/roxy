@@ -32,6 +32,5 @@ pub fn health_rejects_wrong_field_type_test() {
 }
 
 pub fn health_rejects_missing_fields_test() {
-  let assert Error(_) =
-    json.parse(from: "{}", using: health.decoder())
+  let assert Error(_) = json.parse(from: "{}", using: health.decoder())
 }

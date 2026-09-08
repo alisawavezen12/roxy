@@ -1,21 +1,29 @@
 import gleam/erlang/process
+import gleam/int
+import logging
 import mist
 import wisp/wisp_mist
 
 import config/app
 import config/env
+import db/pool
 import http/router
 
 pub fn start() -> Nil {
   let assert Ok(Nil) = env.load()
 
+  logging.configure()
   case app.load() {
     Ok(config) -> start_server(config)
     Error(message) -> panic as message
   }
 }
 
-fn start_server(config: app.Config) -> Nil {
+fn start_server(config: app.AppConfig) -> Nil {
+  let assert Ok(_) = pool.start(config.postgres)
+    as "PostgreSQL connection failed"
+  logging.log(logging.Info, "PostgreSQL connected")
+
   let handler = wisp_mist.handler(router.handle, config.secret_key_base)
   let server =
     mist.new(handler)
@@ -23,7 +31,13 @@ fn start_server(config: app.Config) -> Nil {
     |> mist.port(config.port)
 
   case mist.start(server) {
-    Ok(_) -> process.sleep_forever()
+    Ok(_) -> {
+      logging.log(
+        logging.Info,
+        "HTTP server started on port " <> int.to_string(config.port),
+      )
+      process.sleep_forever()
+    }
     Error(_) -> Nil
   }
 }

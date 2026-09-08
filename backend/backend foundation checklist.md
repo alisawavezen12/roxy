@@ -143,9 +143,9 @@ backend/
 - [x] Описать тип `Config`
 - [x] Добавить HTTP-настройки: `host` и `port`
 - [x] Добавить `environment`: например, `development` и `production`
-- [ ] Добавить настройки PostgreSQL
-- [ ] Добавить размер connection pool
-- [ ] Добавить query timeout
+- [x] Добавить настройки PostgreSQL
+- [x] Добавить размер connection pool
+- [x] Добавить query timeout
 - [x] Добавить чтение переменных окружения
 - [x] Разделить обязательные и необязательные настройки
 - [x] Валидировать обязательную конфигурацию до startup

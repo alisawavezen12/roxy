@@ -326,10 +326,10 @@ logging wrapper finish
   - `Content-Type` и body parsing остаются route-specific.
   - Authentication и coarse route authorization выполняются до handler/service; resource-level authorization может выполняться после загрузки ресурса внутри handler/service.
   - Порядок реализован в `http/router.gleam`; crash boundary дополнительно нормализует panic response.
-- [ ] Проверить, что ошибка handler-а не ломает весь сервер
-  - Добавить unit test через Wisp.
-  - Добавить Mist integration test: `/test/crash` → `500`, затем `/health` → `200`.
-  - Test route не добавлять в production router.
+- [x] Проверить, что ошибка handler-а не ломает весь сервер
+  - Unit test через Wisp добавлен в `test/http/rescue_test.gleam`.
+  - Mist integration test добавлен в `test/http/integration_test.gleam`: test-only `/test/crash` → `500`, затем `/health` → `200`.
+  - Test route существует только внутри integration fixture и не добавлен в production router.
 - [x] Не добавлять static file serving: backend на этом этапе API-only
   - Frontend обслуживается отдельно через Lustre/Nginx/CDN.
   - `wisp.serve_static` не использовать.
@@ -356,22 +356,7 @@ logging wrapper finish
 - [ ] Зафиксировать, что `/api/*` в конечной архитектуре protected by default
 - [ ] Требовать явного объявления для каждой public route
 - [ ] Не добавлять новые public endpoints неявно
-- [ ] Описать dev-only подход для будущего тестового mutation endpoint
-- [ ] Не делать временный публичный `POST /api/posts` до появления `CurrentUser`
 
-Для первой вертикальной фичи допустимы два варианта:
-
-1. сначала проверить `repository → service` интеграционным тестом;
-2. сделать явно dev-only endpoint вроде `POST /api/dev/posts`, существующий только в development.
-
-### Что изучаем
-
-- разделение transport policy и authentication implementation;
-- secure-by-default маршрутизацию;
-- почему временно публичный mutation endpoint опасен;
-- как подготовить router к будущему SSO без внедрения OIDC прямо сейчас.
-
-**Результат:** архитектура маршрутов не требует переделки при добавлении сессий и SSO.
 
 ---
 

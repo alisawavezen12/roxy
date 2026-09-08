@@ -117,13 +117,13 @@ backend/
 
 Цель — добавлять модули постепенно и понимать назначение каждого слоя.
 
-- [ ] Создать `config.gleam`
-- [ ] Создать `errors.gleam`
-- [ ] Создать `http/router.gleam`
-- [ ] Создать `http/handlers/health.gleam`
-- [ ] Создать `http/middleware/error_handler.gleam`
-- [ ] Оставить остальные директории пустыми до появления задачи
-- [ ] Не создавать заранее пустые бизнес-модули
+- [x] Создать `config.gleam`
+- [x] Создать `errors.gleam`
+- [x] Создать `http/router.gleam`
+- [x] Создать `http/handlers/health.gleam`
+- [x] Создать `http/middleware/error_handler.gleam`
+- [x] Оставить остальные директории пустыми до появления задачи
+- [x] Не создавать заранее пустые бизнес-модули
 
 ### Что изучаем
 

@@ -12,11 +12,11 @@ services:
       - ./shared/src:/workspace/shared/src:ro
     ports:
       - "127.0.0.1:8080:8080"
+    env_file:
+      - .env
     environment:
       APP_ENV: development
       DATABASE_URL: postgres://roxy:roxy@postgres:5432/roxy
-      HOST: "0.0.0.0"
-      PORT: "8080"
     depends_on:
       postgres:
         condition: service_healthy

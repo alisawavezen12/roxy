@@ -8,11 +8,11 @@ services:
     init: true
     expose:
       - "8080"
+    env_file:
+      - .env
     environment:
       APP_ENV: production
-      DATABASE_URL: ${DATABASE_URL:-}
-      HOST: "0.0.0.0"
-      PORT: "8080"
+      DATABASE_URL: ${DATABASE_URL:?DATABASE_URL must be set}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--output-document=/dev/null", "http://127.0.0.1:8080/health"]
       interval: 10s

@@ -316,14 +316,16 @@ logging wrapper finish
   - User-Agent и IP отложить до настройки trusted proxy.
   - Обычные `2xx/3xx/4xx` — `INFO`, неожиданные `5xx` — `ERROR`.
   - Реализовано внешним `logging` middleware wrapper.
-- [ ] Добавить `rescue_crashes`
+- [x] Добавить `rescue_crashes`
   - Покрывает весь inner pipeline: middleware, router, route policy, body parsing, handler/service.
   - Crash → безопасный JSON `500`, request ID и server-side stack trace.
   - Stack trace клиенту не возвращать ни в DEV, ни в PROD.
-- [ ] Определить порядок middleware
+  - Panic path дополнительно нормализуется после `wisp.rescue_crashes`, чтобы сохранить единый JSON error format и `X-Request-ID`.
+- [x] Определить порядок middleware
   - Зафиксирован: `request_id → logging wrapper start → HEAD handling → crash boundary → global limits → router → route policy → handler/service → resource-level authorization → API response/error normalization → X-Request-ID → logging wrapper finish`.
   - `Content-Type` и body parsing остаются route-specific.
   - Authentication и coarse route authorization выполняются до handler/service; resource-level authorization может выполняться после загрузки ресурса внутри handler/service.
+  - Порядок реализован в `http/router.gleam`; crash boundary дополнительно нормализует panic response.
 - [ ] Проверить, что ошибка handler-а не ломает весь сервер
   - Добавить unit test через Wisp.
   - Добавить Mist integration test: `/test/crash` → `500`, затем `/health` → `200`.

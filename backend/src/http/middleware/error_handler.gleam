@@ -13,12 +13,23 @@ pub fn handle(
   context: request_context.RequestContext,
   next: fn() -> Result(wisp.Response, route_errors.Error),
 ) -> wisp.Response {
-  wisp.rescue_crashes(fn() {
-    case next() {
-      Ok(response) -> response
-      Error(error) -> response(error, context)
-    }
-  })
+  let response =
+    wisp.rescue_crashes(fn() {
+      case next() {
+        Ok(response) -> response
+        Error(error) -> response(error, context)
+      }
+    })
+  case response.status == status.internal_server_error {
+    True ->
+      api_errors.response(
+        status.internal_server_error,
+        "internal",
+        "Internal server error",
+        context,
+      )
+    _ -> request_context.add_request_id(response, context)
+  }
 }
 
 pub fn response(

@@ -35,7 +35,16 @@ pub fn handle(
   request: wisp.Request,
   dependencies: dependencies.Dependencies,
 ) -> wisp.Response {
-  error_handler.handle(request, fn() { dispatch(request, dependencies) })
+  error_handler.handle(request, fn() {
+    Ok(
+      wisp.handle_head(request, fn(request) {
+        case dispatch(request, dependencies) {
+          Ok(response) -> response
+          Error(error) -> error_handler.response(error)
+        }
+      }),
+    )
+  })
 }
 
 fn dispatch(
@@ -46,7 +55,7 @@ fn dispatch(
     option.Some(route) -> {
       case list.contains(route.methods, request.method) {
         True -> authorize(route.access, route.handler, dependencies)
-        False -> Error(errors.MethodNotAllowed(route.methods))
+        False -> Error(errors.MethodNotAllowed(allowed_methods(route.methods)))
       }
     }
     option.None -> Error(errors.NotFound)
@@ -63,6 +72,17 @@ fn authorize(
     Authenticated -> Error(errors.Unauthorized)
     Permission(_) -> Error(errors.Forbidden)
   }
+}
+
+fn allowed_methods(methods: List(http.Method)) -> List(http.Method) {
+  case list.contains(methods, http.Get) {
+    True -> [http.Get, http.Head, ..methods_without_get(methods)]
+    False -> methods
+  }
+}
+
+fn methods_without_get(methods: List(http.Method)) -> List(http.Method) {
+  list.filter(methods, fn(method) { method != http.Get })
 }
 
 fn find_route(path: String, routes: List(Route)) -> option.Option(Route) {

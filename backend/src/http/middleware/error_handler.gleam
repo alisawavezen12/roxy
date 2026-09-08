@@ -10,12 +10,12 @@ pub fn handle(
   wisp.rescue_crashes(fn() {
     case next() {
       Ok(response) -> response
-      Error(error) -> from_error(error)
+      Error(error) -> response(error)
     }
   })
 }
 
-fn from_error(error: errors.Error) -> wisp.Response {
+pub fn response(error: errors.Error) -> wisp.Response {
   case error {
     errors.NotFound -> responses.text(status.not_found, "Not found")
     errors.MethodNotAllowed(methods) -> responses.method_not_allowed(methods)

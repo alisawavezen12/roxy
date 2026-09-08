@@ -237,38 +237,94 @@ repository
 
 Цель — подготовить единый и безопасный путь обработки каждого HTTP-запроса.
 
-Порядок pipeline зафиксировать явно:
+Порядок pipeline зафиксирован явно:
 
 ```text
 Request
- ↓
-request_id
- ↓
-body/file limits
- ↓
-content-type checks
- ↓
-logging
- ↓
-crash rescue
- ↓
+   ↓
+generate request_id
+   ↓
+logging wrapper start
+   ↓
+HEAD handling
+   ↓
+crash boundary
+   ↓
+global safety limits
+   ↓
 router
- ↓
-handler
+   ↓
+route policy:
+  authentication
+  coarse route authorization
+  content-type contract
+  body parsing
+   ↓
+handler / service
+   ↓
+resource-level authorization
+   ↓
+API response/error normalization
+   ↓
+add X-Request-ID
+   ↓
+logging wrapper finish
 ```
 
-- [ ] Подключить обработку `HEAD`
+### Инварианты
+
+- Каждый HTTP response, включая `404`, `405`, `413`, `415` и `500`, содержит `X-Request-ID`.
+- `HEAD` использует тот же route и ту же security policy, что соответствующий `GET`, и отличается только отсутствием response body.
+- `HEAD` не является способом обойти authentication, authorization или будущие rate limits.
+- API response/error normalization является общей boundary для всего inner pipeline, а не только для handler-а: она нормализует ошибки router, route policy, body parsing и handler/service.
+- Resource-level authorization может выполняться после загрузки ресурса в handler/service. Например: `authentication → load Post → can_delete_post(user, post) → delete`.
+
+
+- [x] Подключить обработку `HEAD`
+  - Глобально через Wisp `handle_head` для каждого route с `GET`.
+  - При наличии `GET` в `Allow` также указывать `HEAD`.
+  - `HEAD` использует тот же route и ту же policy, что соответствующий `GET`, но без response body.
 - [ ] Добавить `request_id` в request context
+  - Генерировать ID только на сервере.
+  - Входящий `X-Request-ID` пока игнорировать.
+  - Использовать отдельный `RequestContext`, не `Dependencies`.
+  - Возвращать ID в `X-Request-ID`.
 - [ ] Ограничить максимальный размер request body
+  - `max_body_size = 1 MiB` одинаково в development и production.
+  - Route-specific override отложить до появления реальной необходимости.
 - [ ] Ограничить максимальный размер загружаемых файлов
+  - `max_files_size = 32 MiB` суммарно на multipart request как future guard.
+  - Не строить дополнительную upload-инфраструктуру до появления upload feature.
+  - Per-file и image-count limits определить вместе с upload feature.
+  - Основные uploads планировать через presigned S3.
 - [ ] Определить поведение для неподдерживаемого `Content-Type`
+  - Проверять только на routes с body contract.
+  - `Json` требует JSON, `Multipart` требует `multipart/form-data`, `NoBody` ничего не требует.
+  - Принимать `application/json; charset=utf-8`.
 - [ ] Возвращать `413 Payload Too Large` для слишком большого body
+  - Нормализовать в единый JSON API error.
 - [ ] Возвращать `415 Unsupported Media Type` для неподдерживаемого content type
+  - Нормализовать в единый JSON API error.
 - [ ] Добавить базовое логирование запроса
+  - `timestamp`, `request_id`, `method`, `path`, `status`, `duration_ms`.
+  - Не логировать raw query string и body.
+  - User-Agent и IP отложить до настройки trusted proxy.
+  - Обычные `2xx/3xx/4xx` — `INFO`, неожиданные `5xx` — `ERROR`.
 - [ ] Добавить `rescue_crashes`
+  - Покрывает весь inner pipeline: middleware, router, route policy, body parsing, handler/service.
+  - Crash → безопасный JSON `500`, request ID и server-side stack trace.
+  - Stack trace клиенту не возвращать ни в DEV, ни в PROD.
 - [ ] Определить порядок middleware
+  - Зафиксирован: `request_id → logging wrapper start → HEAD handling → crash boundary → global limits → router → route policy → handler/service → resource-level authorization → API response/error normalization → X-Request-ID → logging wrapper finish`.
+  - `Content-Type` и body parsing остаются route-specific.
+  - Authentication и coarse route authorization выполняются до handler/service; resource-level authorization может выполняться после загрузки ресурса внутри handler/service.
 - [ ] Проверить, что ошибка handler-а не ломает весь сервер
-- [ ] Не добавлять static file serving: backend на этом этапе API-only
+  - Добавить unit test через Wisp.
+  - Добавить Mist integration test: `/test/crash` → `500`, затем `/health` → `200`.
+  - Test route не добавлять в production router.
+- [x] Не добавлять static file serving: backend на этом этапе API-only
+  - Frontend обслуживается отдельно через Lustre/Nginx/CDN.
+  - `wisp.serve_static` не использовать.
 
 ### Что изучаем
 

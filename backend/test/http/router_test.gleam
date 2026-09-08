@@ -5,6 +5,7 @@ import dependencies
 import gleam/erlang/process
 import gleam/http
 import gleam/http/request
+import gleam/list
 import gleeunit
 import gleeunit/should
 import http/router
@@ -67,6 +68,22 @@ pub fn unknown_route_returns_not_found_test() {
   |> should.equal(404)
 }
 
+pub fn health_route_supports_head_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Head)
+    |> request.set_path("/health")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(200)
+}
+
 pub fn health_route_rejects_unsupported_method_test() {
   let request =
     request.new()
@@ -81,4 +98,7 @@ pub fn health_route_rejects_unsupported_method_test() {
 
   response.status
   |> should.equal(405)
+
+  list.key_find(response.headers, "allow")
+  |> should.equal(Ok("GET, HEAD"))
 }

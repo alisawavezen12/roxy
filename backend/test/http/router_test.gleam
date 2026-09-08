@@ -41,7 +41,7 @@ pub fn unknown_route_returns_not_found_test() {
   |> should.equal(404)
 }
 
-pub fn health_route_requires_get_test() {
+pub fn health_route_rejects_unsupported_method_test() {
   let request =
     request.new()
     |> request.set_method(http.Post)
@@ -54,5 +54,5 @@ pub fn health_route_requires_get_test() {
   let response = router.handle(request)
 
   response.status
-  |> should.equal(404)
+  |> should.equal(405)
 }

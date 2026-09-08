@@ -1,3 +1,4 @@
+import dependencies
 import errors
 import gleam/http
 import gleam/list
@@ -17,7 +18,7 @@ type Route {
     path: String,
     methods: List(http.Method),
     access: Access,
-    handler: fn() -> wisp.Response,
+    handler: fn(dependencies.Dependencies) -> wisp.Response,
   )
 }
 
@@ -30,15 +31,21 @@ const routes = [
   ),
 ]
 
-pub fn handle(request: wisp.Request) -> wisp.Response {
-  error_handler.handle(request, fn() { dispatch(request) })
+pub fn handle(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+) -> wisp.Response {
+  error_handler.handle(request, fn() { dispatch(request, dependencies) })
 }
 
-fn dispatch(request: wisp.Request) -> Result(wisp.Response, errors.Error) {
+fn dispatch(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+) -> Result(wisp.Response, errors.Error) {
   case find_route(request.path, routes) {
     option.Some(route) -> {
       case list.contains(route.methods, request.method) {
-        True -> authorize(route.access, route.handler)
+        True -> authorize(route.access, route.handler, dependencies)
         False -> Error(errors.MethodNotAllowed(route.methods))
       }
     }
@@ -48,10 +55,11 @@ fn dispatch(request: wisp.Request) -> Result(wisp.Response, errors.Error) {
 
 fn authorize(
   access: Access,
-  handler: fn() -> wisp.Response,
+  handler: fn(dependencies.Dependencies) -> wisp.Response,
+  dependencies: dependencies.Dependencies,
 ) -> Result(wisp.Response, errors.Error) {
   case access {
-    Public -> Ok(handler())
+    Public -> Ok(handler(dependencies))
     Authenticated -> Error(errors.Unauthorized)
     Permission(_) -> Error(errors.Forbidden)
   }

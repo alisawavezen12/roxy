@@ -167,15 +167,15 @@ backend/
 
 Цель — явно определить, чем располагает приложение, и передавать зависимости через вызовы.
 
-- [ ] Описать тип `Dependencies`
-- [ ] Включить в него `Config`
-- [ ] Включить в него PostgreSQL connection pool или тип доступа к базе
-- [ ] Создавать `Dependencies` один раз на startup
-- [ ] Передавать зависимости явно в router
-- [ ] Передавать зависимости явно в handlers и services
-- [ ] Не использовать глобальное mutable state для config или DB
-- [ ] Не читать env из handler/service
-- [ ] Не создавать connection pool внутри handler
+- [x] Описать тип `Dependencies`
+- [x] Включить в него `Config`
+- [x] Включить в него PostgreSQL connection pool или тип доступа к базе
+- [x] Создавать `Dependencies` один раз на startup
+- [x] Передавать зависимости явно в router
+- [x] Передавать зависимости явно в handlers и services
+- [x] Не использовать глобальное mutable state для config или DB
+- [x] Не читать env из handler/service
+- [x] Не создавать connection pool внутри handler
 
 Концептуальная схема:
 

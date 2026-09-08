@@ -7,6 +7,7 @@ import wisp/wisp_mist
 import config/app
 import config/env
 import db/pool
+import dependencies
 import http/router
 
 pub fn start() -> Nil {
@@ -20,11 +21,16 @@ pub fn start() -> Nil {
 }
 
 fn start_server(config: app.AppConfig) -> Nil {
-  let assert Ok(_) = pool.start(config.postgres)
+  let assert Ok(postgres) = pool.start(config.postgres)
     as "PostgreSQL connection failed"
   logging.log(logging.Info, "PostgreSQL connected")
 
-  let handler = wisp_mist.handler(router.handle, config.secret_key_base)
+  let dependencies = dependencies.new(config, postgres)
+  let handler =
+    wisp_mist.handler(
+      fn(request) { router.handle(request, dependencies) },
+      config.secret_key_base,
+    )
   let server =
     mist.new(handler)
     |> mist.bind(config.host)

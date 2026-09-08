@@ -298,19 +298,24 @@ logging wrapper finish
   - Не строить дополнительную upload-инфраструктуру до появления upload feature.
   - Per-file и image-count limits определить вместе с upload feature.
   - Основные uploads планировать через presigned S3.
-- [ ] Определить поведение для неподдерживаемого `Content-Type`
+- [x] Определить поведение для неподдерживаемого `Content-Type`
   - Проверять только на routes с body contract.
   - `Json` требует JSON, `Multipart` требует `multipart/form-data`, `NoBody` ничего не требует.
   - Принимать `application/json; charset=utf-8`.
-- [ ] Возвращать `413 Payload Too Large` для слишком большого body
-  - Нормализовать в единый JSON API error.
-- [ ] Возвращать `415 Unsupported Media Type` для неподдерживаемого content type
-  - Нормализовать в единый JSON API error.
-- [ ] Добавить базовое логирование запроса
+  - Контракт хранится в декларации `Route`.
+- [x] Возвращать `413 Payload Too Large` для слишком большого body
+  - Лимит Wisp настроен глобально.
+  - `PayloadTooLarge` добавлен в HTTP route error model и единый JSON API error boundary.
+  - JSON API error boundary покрыт protocol tests; фактический body-read integration test добавить вместе с первым JSON/body route.
+- [x] Возвращать `415 Unsupported Media Type` для неподдерживаемого content type
+  - Route-specific policy возвращает `errors.UnsupportedMediaType`.
+  - Ошибка проходит через общий error boundary и будет нормализована в единый JSON API error.
+- [x] Добавить базовое логирование запроса
   - `timestamp`, `request_id`, `method`, `path`, `status`, `duration_ms`.
   - Не логировать raw query string и body.
   - User-Agent и IP отложить до настройки trusted proxy.
   - Обычные `2xx/3xx/4xx` — `INFO`, неожиданные `5xx` — `ERROR`.
+  - Реализовано внешним `logging` middleware wrapper.
 - [ ] Добавить `rescue_crashes`
   - Покрывает весь inner pipeline: middleware, router, route policy, body parsing, handler/service.
   - Crash → безопасный JSON `500`, request ID и server-side stack trace.

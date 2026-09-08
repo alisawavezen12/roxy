@@ -5,6 +5,7 @@ import gleam/list
 import gleam/option
 import http/handlers/health
 import http/middleware/error_handler
+import http/request_context
 import wisp
 
 type Access {
@@ -18,7 +19,8 @@ type Route {
     path: String,
     methods: List(http.Method),
     access: Access,
-    handler: fn(dependencies.Dependencies) -> wisp.Response,
+    handler: fn(dependencies.Dependencies, request_context.RequestContext) ->
+      wisp.Response,
   )
 }
 
@@ -35,26 +37,30 @@ pub fn handle(
   request: wisp.Request,
   dependencies: dependencies.Dependencies,
 ) -> wisp.Response {
-  error_handler.handle(request, fn() {
-    Ok(
-      wisp.handle_head(request, fn(request) {
-        case dispatch(request, dependencies) {
-          Ok(response) -> response
-          Error(error) -> error_handler.response(error)
-        }
-      }),
-    )
-  })
+  let context = request_context.new()
+  let response =
+    error_handler.handle(request, fn() {
+      Ok(
+        wisp.handle_head(request, fn(request) {
+          case dispatch(request, dependencies, context) {
+            Ok(response) -> response
+            Error(error) -> error_handler.response(error)
+          }
+        }),
+      )
+    })
+  request_context.add_request_id(response, context)
 }
 
 fn dispatch(
   request: wisp.Request,
   dependencies: dependencies.Dependencies,
+  context: request_context.RequestContext,
 ) -> Result(wisp.Response, errors.Error) {
   case find_route(request.path, routes) {
     option.Some(route) -> {
       case list.contains(route.methods, request.method) {
-        True -> authorize(route.access, route.handler, dependencies)
+        True -> authorize(route.access, route.handler, dependencies, context)
         False -> Error(errors.MethodNotAllowed(allowed_methods(route.methods)))
       }
     }
@@ -64,11 +70,13 @@ fn dispatch(
 
 fn authorize(
   access: Access,
-  handler: fn(dependencies.Dependencies) -> wisp.Response,
+  handler: fn(dependencies.Dependencies, request_context.RequestContext) ->
+    wisp.Response,
   dependencies: dependencies.Dependencies,
+  context: request_context.RequestContext,
 ) -> Result(wisp.Response, errors.Error) {
   case access {
-    Public -> Ok(handler(dependencies))
+    Public -> Ok(handler(dependencies, context))
     Authenticated -> Error(errors.Unauthorized)
     Permission(_) -> Error(errors.Forbidden)
   }

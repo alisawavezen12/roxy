@@ -36,6 +36,29 @@ fn postgres_config() -> postgres_config_module.PostgresConfig {
   )
 }
 
+pub fn health_response_contains_server_request_id_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Get)
+    |> request.set_path("/health")
+    |> request.set_header("x-request-id", "client-id")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  let request_id = request_id_header(response)
+  let assert "req_" <> _ = request_id
+  let assert False = request_id == "client-id"
+}
+
+fn request_id_header(response: wisp.Response) -> String {
+  let assert Ok(request_id) = list.key_find(response.headers, "x-request-id")
+  request_id
+}
+
 pub fn health_route_returns_ok_test() {
   let request =
     request.new()

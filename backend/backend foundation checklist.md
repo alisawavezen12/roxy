@@ -284,9 +284,9 @@ logging wrapper finish
   - Глобально через Wisp `handle_head` для каждого route с `GET`.
   - При наличии `GET` в `Allow` также указывать `HEAD`.
   - `HEAD` использует тот же route и ту же policy, что соответствующий `GET`, но без response body.
-- [ ] Добавить `request_id` в request context
+- [x] Добавить `request_id` в request context
   - Генерировать ID только на сервере.
-  - Входящий `X-Request-ID` пока игнорировать.
+  - Входящий `X-Request-ID` игнорировать.
   - Использовать отдельный `RequestContext`, не `Dependencies`.
   - Возвращать ID в `X-Request-ID`.
 - [ ] Ограничить максимальный размер request body

@@ -501,39 +501,6 @@ WebSocket endpoint явный, например /ws;
 
 ---
 
-## 14. Health и readiness
-
-Цель — различать «процесс жив» и «приложение готово обслуживать запросы».
-
-- [ ] Сделать `GET /health` дешёвым liveness endpoint
-- [ ] Сделать `GET /ready` readiness endpoint
-- [ ] Проверять PostgreSQL через контролируемый `SELECT 1`
-- [ ] Задать короткий timeout для readiness-проверки
-- [ ] Не выполнять тяжёлые запросы в `/ready`
-- [ ] Возвращать `503`, если зависимость недоступна
-- [ ] Возвращать `200`, если приложение готово
-- [ ] Не смешивать liveness и readiness в одном endpoint
-
-Различать ситуации:
-
-```text
-невалидный DATABASE_URL
-→ startup failure
-
-PostgreSQL временно недоступен
-→ dependency failure / not ready
-```
-
-### Что изучаем
-
-- liveness и readiness;
-- дешёвые health checks;
-- startup failure против временной недоступности зависимости;
-- восстановление зависимости без ручного перезапуска приложения.
-
-**Результат:** orchestrator или reverse proxy понимает, живо ли приложение и готово ли оно работать.
-
----
 
 ## 15. Миграции и test setup
 

@@ -7,7 +7,7 @@ The backend startup is owned by `src/roxy_application.gleam`:
 3. Build `Dependencies` once from the application config and named connection.
 4. Build the Wisp/Mist handler closure with that `Dependencies` value.
 5. Build the direct Mist child with `handler |> mist.new |> mist.bind |> mist.port |> mist.supervised`.
-6. Start one root `static_supervisor` with `RestForOne` and restart tolerance `intensity: 3, period: 10`, adding PostgreSQL before Mist.
+6. Start one root `static_supervisor` with `RestForOne` and restart tolerance `intensity: 3, period: 10`, adding PostgreSQL, rate limiter, then Mist.
 7. Keep the BEAM entrypoint alive while the linked root supervisor owns the application tree.
 
 ## Child order and policy
@@ -15,7 +15,8 @@ The backend startup is owned by `src/roxy_application.gleam`:
 The root child order is:
 
 1. PostgreSQL pool: `pog.supervised(pool_config)`.
-2. HTTP server: `mist.supervised(builder)`.
+2. Single-instance rate limiter actor.
+3. HTTP server: `mist.supervised(builder)`.
 
 Mist 6's `mist.supervised(builder)` starts the Mist supervisor child. The Wisp router receives the same startup-created `Dependencies` value through the handler closure; there is no global mutable configuration or database state.
 
@@ -42,9 +43,9 @@ The application tree owns both long-lived children:
 - `pog.supervised(pool_config)` owns the PostgreSQL pool;
 - `mist.supervised(builder)` owns Mist's listener/factory supervisors.
 
-When the root supervisor receives OTP shutdown, it stops children in reverse order: Mist first, then PostgreSQL. This stops HTTP before PostgreSQL, so no new HTTP work can depend on a database pool that has already been shut down. Mist 6 exposes the supervised startup API used here; no separate public `mist.stop` function is required for this OTP-owned shutdown path.
+When the root supervisor receives OTP shutdown, it stops children in reverse order: Mist first, then the rate limiter, then PostgreSQL. This stops the listener before its dependencies, so no new HTTP/WebSocket work can depend on a database pool that has already been shut down. Mist 6 exposes no separate public `mist.stop` API in this setup; listener and connection shutdown are owned by the supervised Mist child.
 
-This is graceful at the OTP supervision boundary. Active client requests are governed by Mist's own child shutdown semantics and are not separately integration-tested yet.
+The Docker backend services use a 30-second `stop_grace_period` as the bounded drain window. During that window Mist/OTP owns listener shutdown and current connection shutdown; after the timeout Docker terminates the container. Active request/WebSocket drain is not separately integration-tested yet.
 
 Open `otp-supervision-tree.drawio` in draw.io for the editable architecture diagram.
 

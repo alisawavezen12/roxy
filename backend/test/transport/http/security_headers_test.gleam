@@ -10,6 +10,7 @@ import gleam/http/request
 import gleam/list
 import gleam/otp/static_supervisor as supervisor
 import gleeunit/should
+import observability/metrics
 import pog
 import ratelimit/limiter
 import transport/http/router
@@ -75,7 +76,17 @@ fn dependencies(https: Bool) -> dependencies.Dependencies {
     config,
     pog.named_connection(process.new_name("security_headers_test_pool")),
     limiter_for_test(),
+    metrics_for_test(),
   )
+}
+
+fn metrics_for_test() -> metrics.Metrics {
+  let #(metrics_value, child) = metrics.new_child()
+  let assert Ok(_) =
+    supervisor.new(supervisor.OneForOne)
+    |> supervisor.add(child)
+    |> supervisor.start
+  metrics_value
 }
 
 fn limiter_for_test() -> limiter.Limiter {

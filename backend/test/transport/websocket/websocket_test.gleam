@@ -19,6 +19,7 @@ import gleam/otp/supervision
 import gleam/string
 import gleeunit/should
 import mist
+import observability/metrics
 import pog
 import ratelimit/limiter
 
@@ -167,6 +168,7 @@ fn test_dependencies(port: Int) -> dependencies.Dependencies {
     config,
     pog.named_connection(process.new_name("test_pool")),
     limiter_for_test(),
+    metrics_for_test(),
   )
 }
 
@@ -194,6 +196,15 @@ fn websocket_http_request(
 
 fn oversized_message() -> String {
   string.repeat("x", 65_537)
+}
+
+fn metrics_for_test() -> metrics.Metrics {
+  let #(metrics_value, child) = metrics.new_child()
+  let assert Ok(_) =
+    supervisor.new(supervisor.OneForOne)
+    |> supervisor.add(child)
+    |> supervisor.start
+  metrics_value
 }
 
 fn limiter_for_test() -> limiter.Limiter {

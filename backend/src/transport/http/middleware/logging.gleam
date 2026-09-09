@@ -3,6 +3,7 @@ import gleam/int
 import gleam/time/timestamp
 import logging
 import observability/logger
+import observability/metrics
 import transport/http/protocol/status
 import transport/transport_context
 import wisp
@@ -20,6 +21,10 @@ pub fn handle(
     False -> logging.Info
   }
 
+  metrics.record(
+    context.metrics,
+    metrics.HttpRequestCompleted(response.status, duration_ms),
+  )
   logger.write(level, "http_request_completed", [
     #("transport", "http"),
     #("request_id", transport_context.request_id(context)),

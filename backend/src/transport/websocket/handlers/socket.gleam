@@ -6,6 +6,7 @@ import gleam/http/response
 import gleam/option
 import mist
 import observability/logger
+import observability/metrics
 import ratelimit/limiter
 import transport/http/protocol/mist_errors
 import transport/transport_context
@@ -30,11 +31,13 @@ pub fn handle(
         request:,
         on_init: fn(_connection) {
           log_connected(context)
+          metrics.record(dependencies.metrics, metrics.WebsocketConnected)
           #(State(context:, limiter: dependencies.rate_limiter), option.None)
         },
         handler: handle_message,
         on_close: fn(state) {
           limiter.close_websocket(state.limiter)
+          metrics.record(state.context.metrics, metrics.WebsocketClosed)
           log_closed(state.context)
         },
       )
@@ -50,6 +53,7 @@ fn handle_message(
     limiter.check_websocket_message(state.limiter, state.context.connection_id)
   {
     Error(limiter.RateLimited(_)) -> {
+      metrics.record(state.context.metrics, metrics.WebsocketMessageRateLimited)
       log_error(state.context, "message_rate_limited")
       mist.stop_abnormal("WebSocket message rate limited")
     }
@@ -119,6 +123,7 @@ fn handle_binary(
 }
 
 fn message_too_large(state: State) -> mist.Next(State, Nil) {
+  metrics.record(state.context.metrics, metrics.WebsocketMessageTooLarge)
   log_error(state.context, "message_too_large")
   mist.stop_abnormal("message too large")
 }

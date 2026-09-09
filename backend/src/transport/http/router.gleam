@@ -55,7 +55,7 @@ pub fn handle(
   request: wisp.Request,
   dependencies: dependencies.Dependencies,
 ) -> wisp.Response {
-  let context = transport_context.new()
+  let context = transport_context.new_with(dependencies.metrics)
   let request =
     request
     |> wisp.set_max_body_size(limits.max_body_size)

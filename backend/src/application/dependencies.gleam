@@ -1,6 +1,7 @@
 import config/app
 import db/pool
 import exception
+import observability/metrics
 import pog
 import ratelimit/limiter
 
@@ -9,6 +10,7 @@ pub type Dependencies {
     config: app.AppConfig,
     postgres: pog.Connection,
     rate_limiter: limiter.Limiter,
+    metrics: metrics.Metrics,
   )
 }
 
@@ -16,8 +18,9 @@ pub fn new(
   config: app.AppConfig,
   postgres: pog.Connection,
   rate_limiter: limiter.Limiter,
+  metrics_value: metrics.Metrics,
 ) -> Dependencies {
-  Dependencies(config:, postgres:, rate_limiter:)
+  Dependencies(config:, postgres:, rate_limiter:, metrics: metrics_value)
 }
 
 pub fn execute_query(
@@ -36,6 +39,9 @@ pub fn postgres_ready(dependencies: Dependencies) -> Bool {
     })
   {
     Ok(Ok(_)) -> True
-    Ok(Error(_)) | Error(_) -> False
+    Ok(Error(_)) | Error(_) -> {
+      metrics.record(dependencies.metrics, metrics.DbProbeFailed)
+      False
+    }
   }
 }

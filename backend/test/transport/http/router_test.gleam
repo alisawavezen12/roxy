@@ -12,6 +12,7 @@ import gleam/otp/static_supervisor as supervisor
 import gleam/string
 import gleeunit
 import gleeunit/should
+import observability/metrics
 import pog
 import ratelimit/limiter
 
@@ -41,6 +42,7 @@ fn test_dependencies() -> dependencies.Dependencies {
     config,
     pog.named_connection(process.new_name("test_pool")),
     limiter_for_test(),
+    metrics_for_test(),
   )
 }
 
@@ -51,6 +53,15 @@ fn limiter_for_test() -> limiter.Limiter {
     |> supervisor.add(child)
     |> supervisor.start
   rate_limiter
+}
+
+fn metrics_for_test() -> metrics.Metrics {
+  let #(metrics_value, child) = metrics.new_child()
+  let assert Ok(_) =
+    supervisor.new(supervisor.OneForOne)
+    |> supervisor.add(child)
+    |> supervisor.start
+  metrics_value
 }
 
 fn postgres_config() -> postgres_config_module.PostgresConfig {

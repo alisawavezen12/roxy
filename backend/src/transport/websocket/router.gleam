@@ -1,6 +1,5 @@
-import application/dependencies
-
 import application/access
+import application/dependencies
 import gleam/http
 import gleam/http/request
 import gleam/http/response
@@ -10,6 +9,7 @@ import gleam/time/timestamp
 import logging
 import mist
 import observability/logger
+import observability/metrics
 import transport/session
 import transport/transport_context
 import transport/websocket/connection/context as connection_context
@@ -62,7 +62,7 @@ fn handle(
   http_request: request.Request(mist.Connection),
   dependencies: dependencies.Dependencies,
 ) -> response.Response(mist.ResponseData) {
-  let context = transport_context.new()
+  let context = transport_context.new_with(dependencies.metrics)
   let started_at = timestamp.system_time()
   let response = case
     validation.validate(
@@ -103,6 +103,13 @@ fn handle(
       "x-request-id",
       transport_context.request_id(context),
     )
+  metrics.record(
+    dependencies.metrics,
+    metrics.WebsocketHandshake(
+      response.status,
+      elapsed_milliseconds(started_at),
+    ),
+  )
   log_handshake(http_request, response, context, started_at)
   response
 }
@@ -113,16 +120,7 @@ fn log_handshake(
   context: transport_context.TransportContext,
   started_at: timestamp.Timestamp,
 ) -> Nil {
-  let #(seconds, nanoseconds) =
-    timestamp.to_unix_seconds_and_nanoseconds(timestamp.system_time())
-  let #(started_seconds, started_nanoseconds) =
-    timestamp.to_unix_seconds_and_nanoseconds(started_at)
-  let total_nanoseconds =
-    { seconds - started_seconds }
-    * 1_000_000_000
-    + nanoseconds
-    - started_nanoseconds
-  let duration_ms = total_nanoseconds / 1_000_000
+  let duration_ms = elapsed_milliseconds(started_at)
   let level = case response.status >= 500 {
     True -> logging.Error
     False -> logging.Info
@@ -135,6 +133,19 @@ fn log_handshake(
     #("status", int.to_string(response.status)),
     #("duration_ms", int.to_string(duration_ms)),
   ])
+}
+
+fn elapsed_milliseconds(started: timestamp.Timestamp) -> Int {
+  let #(seconds, nanoseconds) =
+    timestamp.to_unix_seconds_and_nanoseconds(timestamp.system_time())
+  let #(started_seconds, started_nanoseconds) =
+    timestamp.to_unix_seconds_and_nanoseconds(started)
+  let total_nanoseconds =
+    { seconds - started_seconds }
+    * 1_000_000_000
+    + nanoseconds
+    - started_nanoseconds
+  total_nanoseconds / 1_000_000
 }
 
 fn find_route(path: String, routes: List(Route)) -> option.Option(Route) {

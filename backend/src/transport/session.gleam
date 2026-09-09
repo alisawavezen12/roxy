@@ -5,6 +5,7 @@ import gleam/list
 import gleam/option
 import logging
 import observability/logger
+import observability/metrics
 import transport/transport_context
 
 pub const cookie_name = "roxy_session"
@@ -23,6 +24,7 @@ pub fn principal(
       case session_service.verify(signed_value, secret_key_base) {
         Ok(principal) -> option.Some(principal)
         Error(reason) -> {
+          metrics.record(context.metrics, metrics.SessionInvalid)
           logger.write(logging.Warning, "session_invalid", [
             #("request_id", transport_context.request_id(context)),
             #("reason", verification_reason(reason)),
@@ -31,6 +33,7 @@ pub fn principal(
         }
       }
     Error(_) -> {
+      metrics.record(context.metrics, metrics.SessionMissing)
       logger.write(logging.Debug, "session_missing", [
         #("request_id", transport_context.request_id(context)),
       ])

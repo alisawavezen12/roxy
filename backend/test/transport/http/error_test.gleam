@@ -3,6 +3,7 @@ import gleam/http
 import gleam/list
 import gleam/string
 import gleeunit/should
+
 import transport/http/middleware/error_handler
 import transport/http/protocol/http_errors
 import transport/transport_context

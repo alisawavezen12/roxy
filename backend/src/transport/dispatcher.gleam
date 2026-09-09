@@ -17,7 +17,7 @@ pub fn handle(
   http_handler: fn(request.Request(mist.Connection)) ->
     response.Response(mist.ResponseData),
 ) -> response.Response(mist.ResponseData) {
-  let context = transport_context.new()
+  let context = transport_context.new_with(dependencies.metrics)
   let result = case
     transport_security.allows(
       http_request,
@@ -43,7 +43,9 @@ fn rate_limit_and_dispatch(
       case limiter.check_http(dependencies.rate_limiter, ip) {
         Ok(Nil) -> dispatch(http_request, dependencies, http_handler)
         Error(limiter.RateLimited(_)) ->
-          mist_errors.too_many_requests(transport_context.new())
+          mist_errors.too_many_requests(transport_context.new_with(
+            dependencies.metrics,
+          ))
         Error(limiter.ConnectionsFull) -> mist_errors.service_unavailable()
       }
   }

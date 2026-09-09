@@ -3,6 +3,9 @@ version = "1.0.0"
 target = "erlang"
 description = "Roxy HTTP API on Wisp + Mist"
 
+[unit_tests]
+modules = ["backend_test"]
+
 
 [dependencies]
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"

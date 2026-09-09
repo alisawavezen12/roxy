@@ -15,6 +15,7 @@ RUN cd /workspace/backend && gleam deps download
 COPY ./shared/src ./shared/src
 COPY ./backend/src ./backend/src
 COPY ./backend/test ./backend/test
+COPY ./backend/migrations ./backend/migrations
 
 WORKDIR /workspace/backend
 

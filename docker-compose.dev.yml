@@ -9,6 +9,7 @@ services:
     volumes:
       - ./backend/src:/workspace/backend/src
       - ./backend/test:/workspace/backend/test
+      - ./backend/migrations:/workspace/backend/migrations
       - ./shared/src:/workspace/shared/src:ro
     ports:
       - "127.0.0.1:8080:8080"

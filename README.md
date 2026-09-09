@@ -20,6 +20,16 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d --w
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
 ```
 
+### SQL migrations
+
+Применить все ещё не выполненные SQL migrations через существующий PostgreSQL/pog setup:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend gleam run -m backend_migrations
+```
+
+Migrations хранятся в `backend/migrations/`, именуются вроде `0001_create_posts.sql` и не запускаются автоматически при старте backend.
+
 ### Backend-тесты с PostgreSQL
 
 Запустить полный backend test suite внутри development-контейнера, включая integration-тест pool:

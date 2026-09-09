@@ -1,6 +1,7 @@
 import config/defaults
 import config/environment
 import config/origins
+import config/transport
 import db/config as db_config
 import envoy
 import gleam/int
@@ -14,6 +15,7 @@ pub type AppConfig {
     environment: environment.Environment,
     secret_key_base: String,
     origins: origins.OriginsConfig,
+    transport: transport.TransportConfig,
     postgres: db_config.PostgresConfig,
   )
 }
@@ -25,6 +27,7 @@ pub fn load() -> Result(AppConfig, String) {
   use port <- result.try(parse_port(port_string))
   use secret_key_base <- result.try(load_secret(environment))
   use origins_config <- result.try(origins.load(environment))
+  use transport_config <- result.try(transport.load(environment))
   use postgres_config <- result.try(db_config.load(environment))
 
   case string.length(secret_key_base) >= 64 {
@@ -35,6 +38,7 @@ pub fn load() -> Result(AppConfig, String) {
         environment:,
         secret_key_base:,
         origins: origins_config,
+        transport: transport_config,
         postgres: postgres_config,
       ))
     False -> Error("SECRET_KEY_BASE must be at least 64 characters long")

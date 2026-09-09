@@ -11,7 +11,6 @@ pub fn too_many_requests(
     "{\"error\":{\"code\":\"rate_limited\",\"message\":\"Too many requests\",\"request_id\":\""
     <> request_id
     <> "\"}}"
-
   response.new(429)
   |> response.set_header("content-type", "application/json; charset=utf-8")
   |> response.set_header("x-request-id", request_id)
@@ -23,4 +22,9 @@ pub fn service_unavailable() -> response.Response(mist.ResponseData) {
   |> response.set_body(
     mist.Bytes(bytes_tree.from_string("Service Unavailable")),
   )
+}
+
+pub fn insecure_transport() -> response.Response(mist.ResponseData) {
+  response.new(400)
+  |> response.set_body(mist.Bytes(bytes_tree.from_string("Insecure transport")))
 }

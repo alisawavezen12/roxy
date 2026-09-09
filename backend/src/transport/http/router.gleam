@@ -11,6 +11,7 @@ import transport/http/handlers/readiness
 import transport/http/middleware/cors
 import transport/http/middleware/error_handler
 import transport/http/middleware/logging
+import transport/http/middleware/security_headers
 import transport/http/protocol/http_errors as errors
 import transport/http/protocol/limits
 import transport/http/request_body
@@ -74,7 +75,9 @@ pub fn handle(
         })
       })
     })
-  request_id.add_request_id(response, context)
+  response
+  |> security_headers.handle(dependencies.config.transport)
+  |> fn(response) { request_id.add_request_id(response, context) }
 }
 
 fn dispatch(

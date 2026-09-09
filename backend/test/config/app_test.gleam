@@ -41,6 +41,9 @@ pub fn production_reads_environment_test() {
     "CORS_ALLOWED_ORIGINS",
     "https://app.example.com, https://admin.example.com:8443",
   )
+  envoy.set("PUBLIC_BASE_URL", "https://app.example.com")
+  envoy.set("TRUSTED_PROXY_IPS", "10.0.0.2")
+  envoy.set("TRUSTED_INTERNAL_IPS", "172.18.0.2")
 
   let assert Ok(config) = app.load()
 
@@ -59,6 +62,9 @@ pub fn production_reads_environment_test() {
 
 pub fn production_requires_cors_origins_test() {
   envoy.set("APP_ENV", "production")
+  envoy.set("PUBLIC_BASE_URL", "https://app.example.com")
+  envoy.set("TRUSTED_PROXY_IPS", "10.0.0.2")
+  envoy.set("TRUSTED_INTERNAL_IPS", "172.18.0.2")
   envoy.set("PORT", "9090")
   envoy.set("DATABASE_URL", "postgres://user:password@db/app")
   envoy.set("DATABASE_POOL_SIZE", "20")
@@ -107,6 +113,9 @@ pub fn production_rejects_empty_port_test() {
 
 fn configure_production() -> Nil {
   envoy.set("APP_ENV", "production")
+  envoy.set("PUBLIC_BASE_URL", "https://app.example.com")
+  envoy.set("TRUSTED_PROXY_IPS", "10.0.0.2")
+  envoy.set("TRUSTED_INTERNAL_IPS", "172.18.0.2")
   envoy.set("PORT", "9090")
   envoy.set("DATABASE_URL", "postgres://user:password@db/app")
   envoy.set("DATABASE_POOL_SIZE", "20")

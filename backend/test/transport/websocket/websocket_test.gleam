@@ -19,6 +19,8 @@ import gleam/string
 import gleeunit/should
 import mist
 import pog
+import ratelimit/limiter
+
 import transport/dispatcher
 import transport/http/router as http_router
 import transport/websocket/client
@@ -155,7 +157,11 @@ fn test_dependencies(port: Int) -> dependencies.Dependencies {
         query_timeout: 1000,
       ),
     )
-  dependencies.new(config, pog.named_connection(process.new_name("test_pool")))
+  dependencies.new(
+    config,
+    pog.named_connection(process.new_name("test_pool")),
+    limiter_for_test(),
+  )
 }
 
 fn get(port: Int, path: String) -> Response(String) {
@@ -182,6 +188,15 @@ fn websocket_http_request(
 
 fn oversized_message() -> String {
   string.repeat("x", 65_537)
+}
+
+fn limiter_for_test() -> limiter.Limiter {
+  let #(rate_limiter, child) = limiter.new_child()
+  let assert Ok(_) =
+    supervisor.new(supervisor.OneForOne)
+    |> supervisor.add(child)
+    |> supervisor.start
+  rate_limiter
 }
 
 fn websocket_url(port: Int) -> String {

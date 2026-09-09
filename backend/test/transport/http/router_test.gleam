@@ -7,10 +7,13 @@ import gleam/erlang/process
 import gleam/http
 import gleam/http/request
 import gleam/list
+import gleam/otp/static_supervisor as supervisor
 import gleam/string
 import gleeunit
 import gleeunit/should
 import pog
+import ratelimit/limiter
+
 import transport/http/router
 import wisp
 
@@ -28,7 +31,20 @@ fn test_dependencies() -> dependencies.Dependencies {
       origins: origins.OriginsConfig(allowed: ["http://localhost:1234"]),
       postgres: postgres_config(),
     )
-  dependencies.new(config, pog.named_connection(process.new_name("test_pool")))
+  dependencies.new(
+    config,
+    pog.named_connection(process.new_name("test_pool")),
+    limiter_for_test(),
+  )
+}
+
+fn limiter_for_test() -> limiter.Limiter {
+  let #(rate_limiter, child) = limiter.new_child()
+  let assert Ok(_) =
+    supervisor.new(supervisor.OneForOne)
+    |> supervisor.add(child)
+    |> supervisor.start
+  rate_limiter
 }
 
 fn postgres_config() -> postgres_config_module.PostgresConfig {

@@ -6,30 +6,62 @@ import gleam/http/response
 import gleam/option
 import mist
 import observability/logger
+import ratelimit/limiter
+import transport/http/protocol/mist_errors
+import transport/transport_context
 import transport/websocket/connection/context as connection_context
 import transport/websocket/protocol/limits
 
 pub type State {
-  State(context: connection_context.ConnectionContext)
+  State(context: connection_context.ConnectionContext, limiter: limiter.Limiter)
 }
 
 pub fn handle(
-  _dependencies: dependencies.Dependencies,
+  dependencies: dependencies.Dependencies,
   context: connection_context.ConnectionContext,
   request: request.Request(mist.Connection),
 ) -> response.Response(mist.ResponseData) {
-  mist.websocket(
-    request:,
-    on_init: fn(_connection) {
-      log_connected(context)
-      #(State(context:), option.None)
-    },
-    handler: handle_message,
-    on_close: fn(state) { log_closed(state.context) },
-  )
+  case limiter.open_websocket(dependencies.rate_limiter) {
+    Error(limiter.ConnectionsFull) -> mist_errors.service_unavailable()
+    Error(limiter.RateLimited(_)) ->
+      mist_errors.too_many_requests(transport_context.new())
+    Ok(Nil) ->
+      mist.websocket(
+        request:,
+        on_init: fn(_connection) {
+          log_connected(context)
+          #(State(context:, limiter: dependencies.rate_limiter), option.None)
+        },
+        handler: handle_message,
+        on_close: fn(state) {
+          limiter.close_websocket(state.limiter)
+          log_closed(state.context)
+        },
+      )
+  }
 }
 
 fn handle_message(
+  state: State,
+  message: mist.WebsocketMessage(Nil),
+  connection: mist.WebsocketConnection,
+) -> mist.Next(State, Nil) {
+  case
+    limiter.check_websocket_message(state.limiter, state.context.connection_id)
+  {
+    Error(limiter.RateLimited(_)) -> {
+      log_error(state.context, "message_rate_limited")
+      mist.stop_abnormal("WebSocket message rate limited")
+    }
+    Error(limiter.ConnectionsFull) -> {
+      log_error(state.context, "connection_limit_rejected")
+      mist.stop_abnormal("WebSocket connection limit reached")
+    }
+    Ok(Nil) -> check_message(state, message, connection)
+  }
+}
+
+fn check_message(
   state: State,
   message: mist.WebsocketMessage(Nil),
   connection: mist.WebsocketConnection,

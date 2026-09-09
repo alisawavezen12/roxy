@@ -7,5 +7,6 @@ pub type HttpError {
   UnsupportedMediaType
   InvalidBody
   PayloadTooLarge
+  TooManyRequests
   Access(access.AccessError)
 }

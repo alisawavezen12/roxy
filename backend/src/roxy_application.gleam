@@ -6,6 +6,7 @@ import gleam/erlang/process
 import gleam/otp/static_supervisor as supervisor
 import logging
 import mist
+import ratelimit/limiter
 import wisp/wisp_mist
 
 import transport/dispatcher
@@ -17,7 +18,8 @@ pub fn start() -> Nil {
 
   let assert Ok(config) = app.load()
   let assert Ok(#(postgres, postgres_child)) = pool.build(config.postgres)
-  let dependencies = dependencies.new(config, postgres)
+  let #(rate_limiter, rate_limiter_child) = limiter.new_child()
+  let dependencies = dependencies.new(config, postgres, rate_limiter)
   let http_handler =
     wisp_mist.handler(
       fn(request) { http_router.handle(request, dependencies) },
@@ -39,6 +41,7 @@ pub fn start() -> Nil {
     supervisor.new(supervisor.RestForOne)
     |> supervisor.restart_tolerance(3, 10)
     |> supervisor.add(postgres_child)
+    |> supervisor.add(rate_limiter_child)
     |> supervisor.add(http_child)
     |> supervisor.start
 

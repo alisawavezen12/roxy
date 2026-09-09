@@ -63,6 +63,13 @@ pub fn response(
     http_errors.InvalidBody ->
       api_errors.response(400, "invalid_body", "Invalid request body", context)
     http_errors.PayloadTooLarge -> api_errors.payload_too_large(context)
+    http_errors.TooManyRequests ->
+      api_errors.response(
+        status.too_many_requests,
+        "rate_limited",
+        "Too many requests",
+        context,
+      )
     http_errors.Access(error) -> access_response(error, context)
   }
 }

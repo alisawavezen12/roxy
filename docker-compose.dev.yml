@@ -73,3 +73,10 @@ services:
       start_period: 30s
     restart: unless-stopped
     stop_grace_period: 10s
+
+volumes:
+  postgres_data:
+
+networks:
+  database_internal:
+    internal: true

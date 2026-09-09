@@ -19,15 +19,26 @@ pub fn build(
   Ok(#(connection, pool_child))
 }
 
+pub fn execute(
+  connection: pog.Connection,
+  sql: String,
+  timeout: Int,
+) -> Result(pog.Returned(Nil), pog.QueryError) {
+  pog.query(sql)
+  |> pog.timeout(timeout)
+  |> pog.execute(connection)
+}
+
 pub fn wait_until_ready(
   connection: pog.Connection,
+  timeout: Int,
   attempts: Int,
 ) -> Result(Nil, String) {
-  case pog.query("select 1") |> pog.execute(connection) {
+  case execute(connection, "select 1", timeout) {
     Ok(_) -> Ok(Nil)
     Error(_) if attempts > 0 -> {
       process.sleep(100)
-      wait_until_ready(connection, attempts - 1)
+      wait_until_ready(connection, timeout, attempts - 1)
     }
     Error(_) -> Error("PostgreSQL connection failed")
   }

@@ -368,6 +368,19 @@ logging wrapper finish
 
 Цель — зафиксировать правила HTTP и WebSocket-транспорта до настройки production TLS.
 
+И зафиксировал несколько правил:
+
+один WebSocket connection = один отдельный process/actor;
+connection actor отвечает только за lifecycle конкретного клиента;
+connection actor не является source of truth;
+auth/authorization проверяются до upgrade;
+сообщения сначала можно оставить простыми Text/Binary envelope без бизнес-смысла;
+on_close обязательно чистит connection state;
+connection должен переживать только жизнь socket'а;
+долгоживущее shared state потом появится отдельными actors/services;
+WebSocket endpoint явный, например /ws;
+в DEV/internal network — ws://, в public production — wss://.
+
 - [ ] Добавить transport policy в архитектурную документацию или `Config`
 - [ ] Разрешить HTTP для localhost в development
 - [ ] Разрешить HTTP внутри trusted Docker network
@@ -422,14 +435,22 @@ logging wrapper finish
 
 Цель — уметь найти в логах всю информацию об одном запросе.
 
-- [ ] Генерировать `request_id` для каждого запроса на сервере
-- [ ] Не доверять произвольному `X-Request-ID` от публичного клиента
-- [ ] Передавать `request_id` через middleware и context
-- [ ] Возвращать его клиенту в заголовке `X-Request-ID`
-- [ ] Логировать method, path и status
-- [ ] Логировать длительность запроса
-- [ ] Логировать ошибки вместе с `request_id`
-- [ ] Не записывать в логи секреты и чувствительные данные
+- [x] Генерировать `request_id` для каждого запроса на сервере
+  - `http/request_context.new()` создаёт новый ID формата `req_...` для каждого запроса.
+- [x] Не доверять произвольному `X-Request-ID` от публичного клиента
+  - Входящий заголовок не используется: сервер всегда создаёт собственный ID.
+- [x] Передавать `request_id` через middleware и context
+  - Один `RequestContext` используется router, error handler и logging middleware.
+- [x] Возвращать его клиенту в заголовке `X-Request-ID`
+  - Заголовок добавляется к успешным, ошибочным и crash-response.
+- [x] Логировать method, path и status
+  - `http/middleware/logging.gleam` пишет их в key-value log entry.
+- [x] Логировать длительность запроса
+  - Middleware измеряет время выполнения pipeline и пишет `duration_ms`.
+- [x] Логировать ошибки вместе с `request_id`
+  - Ответы со статусом `500+` логируются на уровне `Error`; каждый log entry содержит `request_id`.
+- [x] Не записывать в логи секреты и чувствительные данные
+  - В базовом middleware не логируются body, headers, cookies, authorization или конфигурационные секреты; записываются только технические поля запроса.
 
 ### Что изучаем
 
@@ -446,15 +467,26 @@ logging wrapper finish
 
 Цель — подключить базу как инфраструктурную зависимость, но пока не реализовывать бизнес-сущности.
 
-- [ ] Добавить конфигурацию подключения к PostgreSQL
-- [ ] Запустить PostgreSQL connection pool через `pog`
-- [ ] Добавить pool в supervision tree
-- [ ] Настроить явный конечный размер pool
-- [ ] Настроить query timeout
-- [ ] Понять, почему pool имеет конечный размер
-- [ ] Проверить поведение при исчерпании pool
-- [ ] Добавить временный `GET /ready`
-- [ ] Не создавать таблицы пользователей и постов на этом этапе
+- [x] Добавить конфигурацию подключения к PostgreSQL
+  - `db/config.gleam` загружает URL, размер pool и timeout; в production настройки обязательны и валидируются.
+- [x] Запустить PostgreSQL connection pool через `pog`
+  - `db/pool.gleam` строит `pog` config и создаёт supervised pool.
+- [x] Добавить pool в supervision tree
+  - Pool добавляется в `RestForOne` supervisor перед HTTP child в `roxy_application.gleam`.
+- [x] Настроить явный конечный размер pool
+  - Размер задаётся через `DATABASE_POOL_SIZE` в production и равен `10` по умолчанию в development.
+- [x] Настроить query timeout
+  - `db/pool.execute` применяет `pog.timeout(...)` к каждому запросу.
+  - `dependencies.execute_query` передаёт в DB boundary значение `config.postgres.query_timeout`.
+  - `wait_until_ready` использует тот же timeout.
+- [x] Понять, почему pool имеет конечный размер
+  - Конечный pool ограничивает число одновременных соединений и нагрузку на PostgreSQL; запросы сверх доступной ёмкости проходят через очередь/ограничения pool.
+- [x] Проверить поведение при исчерпании pool
+  - Integration-тест `db/pool_integration_test.gleam` запускается при `APP_ENV=development`.
+  - Он берёт development URL из `db/defaults.gleam`, поднимает pool размером `1`, удерживает соединение через `pg_sleep` и проверяет отказ второго checkout по короткому timeout.
+  - Проверено командой `docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend gleam test` при healthy PostgreSQL в `database_internal`.
+- [x] Не создавать таблицы пользователей и постов на этом этапе
+  - Бизнес-сущности, миграции и repositories для пользователей/постов пока не добавлены.
 
 ### Что изучаем
 

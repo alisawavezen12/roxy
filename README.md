@@ -20,6 +20,16 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d --w
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
 ```
 
+### Backend-тесты с PostgreSQL
+
+Запустить полный backend test suite внутри development-контейнера, включая integration-тест pool:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend gleam test
+```
+
+Тесты выполняются внутри Docker-сети, поэтому backend обращается к PostgreSQL по внутреннему имени сервиса `postgres`. Integration-сценарий запускается только при `APP_ENV=development`.
+
 ### Что обновляется автоматически
 
 | Изменение | Действие |

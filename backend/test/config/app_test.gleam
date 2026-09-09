@@ -23,7 +23,7 @@ pub fn development_uses_defaults_test() {
     "development-secret-key-base-that-is-long-enough-for-wisp-xxxxxxxxxxxx",
   )
 
-  config.cors.allowed_origins
+  config.origins.allowed
   |> should.equal(["http://localhost:1234"])
 }
 
@@ -50,7 +50,7 @@ pub fn production_reads_environment_test() {
   config.port
   |> should.equal(9090)
 
-  config.cors.allowed_origins
+  config.origins.allowed
   |> should.equal([
     "https://app.example.com",
     "https://admin.example.com:8443",

@@ -7,7 +7,7 @@ pub type Environment {
 
 pub fn load() -> Result(Environment, String) {
   case envoy.get("APP_ENV") {
-    Error(_) | Ok("") -> Ok(Development)
+    Error(_) | Ok("") -> Error("APP_ENV environment variable is required")
     Ok("development") -> Ok(Development)
     Ok("production") -> Ok(Production)
     Ok(value) ->

@@ -1,14 +1,15 @@
+import application/dependencies
 import config/app
 import config/env
 import db/pool
-import dependencies
 import gleam/erlang/process
 import gleam/otp/static_supervisor as supervisor
 import logging
 import mist
 import wisp/wisp_mist
 
-import http/router
+import transport/dispatcher
+import transport/http/router as http_router
 
 pub fn start() -> Nil {
   let assert Ok(Nil) = env.load()
@@ -17,11 +18,14 @@ pub fn start() -> Nil {
   let assert Ok(config) = app.load()
   let assert Ok(#(postgres, postgres_child)) = pool.build(config.postgres)
   let dependencies = dependencies.new(config, postgres)
-  let handler =
+  let http_handler =
     wisp_mist.handler(
-      fn(request) { router.handle(request, dependencies) },
+      fn(request) { http_router.handle(request, dependencies) },
       config.secret_key_base,
     )
+  let handler = fn(request) {
+    dispatcher.handle(request, dependencies, http_handler)
+  }
   let http_child =
     handler
     |> mist.new

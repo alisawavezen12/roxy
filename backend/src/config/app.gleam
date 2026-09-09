@@ -1,6 +1,6 @@
-import config/cors
 import config/defaults
 import config/environment
+import config/origins
 import db/config as db_config
 import envoy
 import gleam/int
@@ -13,7 +13,7 @@ pub type AppConfig {
     port: Int,
     environment: environment.Environment,
     secret_key_base: String,
-    cors: cors.CorsConfig,
+    origins: origins.OriginsConfig,
     postgres: db_config.PostgresConfig,
   )
 }
@@ -24,7 +24,7 @@ pub fn load() -> Result(AppConfig, String) {
   use port_string <- result.try(load_port(environment))
   use port <- result.try(parse_port(port_string))
   use secret_key_base <- result.try(load_secret(environment))
-  use cors_config <- result.try(cors.load(environment))
+  use origins_config <- result.try(origins.load(environment))
   use postgres_config <- result.try(db_config.load(environment))
 
   case string.length(secret_key_base) >= 64 {
@@ -34,7 +34,7 @@ pub fn load() -> Result(AppConfig, String) {
         port:,
         environment:,
         secret_key_base:,
-        cors: cors_config,
+        origins: origins_config,
         postgres: postgres_config,
       ))
     False -> Error("SECRET_KEY_BASE must be at least 64 characters long")

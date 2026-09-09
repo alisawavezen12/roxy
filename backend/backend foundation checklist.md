@@ -350,12 +350,16 @@ logging wrapper finish
 
 Цель — сразу зафиксировать принцип protected by default, не внедряя пока полноценный SSO.
 
-- [ ] Разделить public и authenticated routes концептуально
-- [ ] Явно пометить `GET /health` как public
-- [ ] Явно пометить `GET /ready` как public/internal
-- [ ] Зафиксировать, что `/api/*` в конечной архитектуре protected by default
-- [ ] Требовать явного объявления для каждой public route
-- [ ] Не добавлять новые public endpoints неявно
+- [x] Разделить public и authenticated routes концептуально
+  - В `http/router.gleam` access является обязательным полем декларации `Route`: `Public`, `Authenticated` или `Permission(...)`.
+- [x] Явно пометить `GET /health` как public
+  - Production route registry содержит `GET /health` с `access: Public`.
+- [x] Зафиксировать, что `/api/*` в конечной архитектуре protected by default
+  - Новые API routes должны быть authenticated/permission-protected; public access допускается только через явный `Public` в декларации route.
+- [x] Требовать явного объявления для каждой public route
+  - `Route` не имеет access по умолчанию: каждый route обязан явно выбрать policy.
+- [x] Не добавлять новые public endpoints неявно
+  - Любой новый endpoint добавляется только через route registry с явным access marker; отсутствие route не превращается в public endpoint.
 
 
 ---
@@ -595,11 +599,11 @@ Foundation считается завершённым, когда выполне�
 
 ### Route security
 
-- [ ] public и protected routes разделены концептуально;
-- [ ] `/health` явно public;
-- [ ] `/ready` явно public/internal;
-- [ ] новые public routes требуют явного объявления;
-- [ ] mutation endpoint не становится временно публичным без dev-only ограничения.
+- [x] public и protected routes разделены концептуально;
+- [x] `/health` явно public;
+- [x] новые public routes требуют явного объявления;
+- [x] mutation endpoint не становится временно публичным без dev-only ограничения;
+- [x] `/api/*` protected by default зафиксирован в route policy.
 
 ### Errors / observability
 
@@ -616,7 +620,7 @@ Foundation считается завершённым, когда выполне�
 - [ ] PostgreSQL connection pool находится под supervision;
 - [ ] pool имеет ограниченный размер;
 - [ ] query timeout задан;
-- [ ] `/health` и `/ready` разделены;
+- [ ] `/health` и readiness endpoint разделены;
 - [ ] readiness использует дешёвую проверку с коротким timeout;
 - [ ] миграции можно запускать повторяемо;
 - [ ] test database отделена от dev database.

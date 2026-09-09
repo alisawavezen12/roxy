@@ -7,6 +7,7 @@ import gleam/erlang/process
 import gleam/http
 import gleam/http/request
 import gleam/list
+import gleam/string
 import gleeunit
 import gleeunit/should
 import pog
@@ -59,6 +60,26 @@ pub fn health_response_contains_server_request_id_test() {
 fn request_id_header(response: wisp.Response) -> String {
   let assert Ok(request_id) = list.key_find(response.headers, "x-request-id")
   request_id
+}
+
+pub fn readiness_route_returns_service_unavailable_without_database_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Get)
+    |> request.set_path("/ready")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(503)
+
+  request_id_header(response)
+  |> string.starts_with("req_")
+  |> should.equal(True)
 }
 
 pub fn health_route_returns_ok_test() {

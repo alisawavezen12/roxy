@@ -1,680 +1,378 @@
-# Backend foundation checklist
+# Backend foundation — актуальный статус
 
-Цель этого документа — довести backend от пустого каркаса до устойчивой основы, на которой можно начинать первую бизнес-фичу.
+Этот документ фиксирует состояние foundation-слоя backend-а перед первой бизнес-фичей.
 
-Первая бизнес-фича начнётся **после этого чек-листа**. Ею будет простой вертикальный сценарий: создать и получить пост.
+Он не является общим production-roadmap. Постоянные требования безопасности и эксплуатации находятся в:
 
-> Gleam как язык отдельно не изучаем: предполагается, что базовые знания языка уже есть. Здесь изучаем Wisp, Mist, OTP и устройство backend-приложения.
+```text
+../backend-production-checklist-gleam-wisp-mist.md
+```
+
+В частности, secure-by-default правила, TLS/WSS, production proxy, rate limiting, migrations, resource authorization и deployment hardening не дублируются здесь.
 
 ---
 
 ## Границы foundation
 
-До первой бизнес-фичи делаем только то, что нужно для надёжного HTTP-приложения:
+Foundation сейчас включает:
 
 - Mist и Wisp;
-- конфигурацию и явные зависимости;
+- typed configuration и fail-fast startup;
+- явные application dependencies;
 - OTP supervision tree;
-- router и middleware pipeline;
-- модель ошибок;
-- request ID и базовое логирование;
+- HTTP transport boundary;
+- WebSocket handshake и connection boundary;
+- access policy и session verification;
+- HTTP/WebSocket error mappings;
+- request ID и базовое техническое логирование;
 - PostgreSQL connection pool через `pog`;
-- health/readiness;
-- миграции и test setup;
-- базовые HTTP-лимиты и route security policy.
+- базовые body/file limits;
+- тестовый foundation для HTTP, WebSocket, access и OTP.
 
-Пока **не добавляем** WebSocket, бинарный протокол, S3, webhooks, background jobs, ETS, HAProxy, несколько backend-инстансов, WASM и полноценные production metrics. Эти технологии появятся вместе с конкретной задачей, которая их оправдывает.
+Не является частью текущего foundation:
+
+- бизнес-сущности и repositories;
+- migrations и test database;
+- resource-level authorization;
+
+- SSO/OIDC и полноценная session lifecycle model;
+- rate limiting;
+- S3, webhooks, jobs, ETS и distributed realtime;
+- публичный TLS termination через HAProxy/reverse proxy.
+
+Эти требования описаны в production checklist или добавляются вместе с соответствующей feature.
 
 ---
 
-## 0. Точка старта
+## 0. Точка старта и актуальная структура
 
-- [x] Сохранить существующий Gleam-проект backend
-- [x] Удалить старую тестовую HTTP-логику
-- [x] Оставить минимальный `src/backend.gleam`
-- [x] Создать архитектурные директории без рабочих модулей
-- [x] Добавить `.gitkeep` в пустые директории
-- [x] Проверить backend через `gleam check`
+- [x] Сохранён Gleam backend project.
+- [x] Удалена старая HTTP-структура и старые тестовые модули.
+- [x] Оставлена минимальная точка входа `src/backend.gleam`.
+- [x] Рабочая структура отражает ownership слоёв.
+- [x] Foundation проверяется через `gleam check` и `gleam test`.
 
-**Сейчас в backend есть:**
+Текущее дерево рабочих модулей:
 
 ```text
-backend/
-├── gleam.toml
-├── manifest.toml
-├── priv/
-│   └── static/       # пока не используется: backend остаётся API-only
-├── src/
-│   ├── backend.gleam
-│   ├── auth/
-│   ├── db/
-│   │   └── repositories/
-│   ├── domain/
-│   ├── http/
-│   │   ├── handlers/
-│   │   └── middleware/
-│   ├── jobs/
-│   ├── observability/
-│   ├── realtime/
-│   ├── services/
-│   └── storage/
-└── test/
+backend/src
+├── application
+│   ├── access.gleam
+│   ├── dependencies.gleam
+│   └── services/session.gleam
+├── config
+├── db
+├── domain              # бизнес-домен пока пуст
+├── jobs                # зарезервировано для будущих jobs
+├── observability
+├── storage             # зарезервировано для будущего storage
+├── transport
+│   ├── dispatcher.gleam
+│   ├── session.gleam
+│   ├── transport_context.gleam
+│   ├── http
+│   │   ├── handlers
+│   │   ├── middleware
+│   │   ├── protocol
+│   │   ├── request_id.gleam
+│   │   └── router.gleam
+│   └── websocket
+│       ├── connection
+│       ├── handlers
+│       ├── handshake
+│       ├── protocol
+│       └── router.gleam
+└── roxy_application.gleam
 ```
+
+Слои не смешиваются:
+
+```text
+transport → application → domain
+
+config / db / storage / jobs / observability
+```
+
+`application/access.gleam` содержит общую access policy (`Principal`, permissions, `authorize`), а не HTTP/WebSocket response logic.
 
 ---
 
 ## 1. Локальное окружение
 
-Цель — запускать.
-
-- [x] Docker
-
----
-
-## 2. Первый HTTP-сервер на Mist
-
-Цель — понять Mist как HTTP-сервер до добавления web-слоя Wisp.
-
-- [x] Создать минимальную конфигурацию HTTP-сервера
-- [x] Запустить Mist на локальном порту
-- [x] Добавить временный endpoint `GET /health`
-- [x] Вернуть простой текстовый или JSON-ответ
-- [x] Проверить endpoint через `curl`
-- [x] Проверить корректное завершение процесса
-
-### Что изучаем
-
-- роль Mist в стеке;
-- запуск и остановку HTTP-сервера;
-- адрес и порт привязки;
-- жизненный цикл приложения BEAM.
-
-**Результат:** минимальный Mist-сервер отвечает на `GET /health`.
+- [x] Docker Compose для development существует.
+- [x] Development явно задаёт `APP_ENV=development`.
+- [x] Production Compose явно задаёт `APP_ENV=production`.
+- [x] Backend запускается в контейнере вместе с PostgreSQL.
 
 ---
 
-## 3. Подключение Wisp
+## 2. Mist и Wisp
 
-Цель — понять, какую задачу решает Wisp поверх Mist.
-
-- [x] Подключить Wisp как web-слой
-- [x] Разделить запуск сервера и обработку HTTP-запроса
-- [x] Добавить `405 Method Not Allowed` для неподдерживаемого метода
-
-### Что изучаем
-
-- Wisp как web framework;
-- `Request` и `Response`;
-- маршрутизацию;
-- связь `Wisp → Mist → BEAM`;
-- почему router не должен содержать бизнес-логику.
-
-**Результат:** запрос проходит по цепочке `Mist → Wisp → router → response`.
+- [x] Mist используется как HTTP server.
+- [x] Wisp используется как HTTP web layer.
+- [x] Startup отделён от request handling.
+- [x] `/health` отвечает через production router.
+- [x] Неизвестный HTTP route возвращает `404`.
+- [x] Resource существует, но method не разрешён — возвращается `405` с `Allow`.
+- [x] `HEAD` использует тот же route и access policy, что и соответствующий `GET`.
+- [x] WebSocket `/ws` проходит через dispatcher и отдельный handshake pipeline.
 
 ---
 
-## 4. Стартовая структура приложения
+## 3. Конфигурация
 
-Цель — добавлять модули постепенно и понимать назначение каждого слоя.
-
-- [x] Создать `config.gleam`
-- [x] Создать `errors.gleam`
-- [x] Создать `http/router.gleam`
-- [x] Создать `http/handlers/health.gleam`
-- [x] Создать `http/middleware/error_handler.gleam`
-- [x] Оставить остальные директории пустыми до появления задачи
-- [x] Не создавать заранее пустые бизнес-модули
-
-### Что изучаем
-
-- точку входа приложения;
-- разделение startup, routing, handlers и domain-кода;
-- границы модулей;
-- почему структура — это ориентир, а не повод создавать код без задачи.
-
-**Результат:** минимальный backend разложен по понятным слоям.
+- [x] Конфигурация собирается до запуска зависимостей и server.
+- [x] `AppConfig` содержит environment, host, port, secret, origins и PostgreSQL config.
+- [x] Production settings обязательны.
+- [x] Port валидируется до startup.
+- [x] `APP_ENV` обязателен; отсутствие или пустое значение не включает Development автоматически.
+- [x] Development defaults ограничены development environment.
+- [x] Secrets не читаются из handler/service и не логируются.
+- [x] CORS origins валидируются как конкретные HTTP origins.
 
 ---
 
-## 5. Конфигурация приложения
+## 4. Application dependencies
 
-Цель — убрать настройки из кода и подготовить единый типизированный объект конфигурации.
+- [x] Существует typed `Dependencies`.
+- [x] Config и PostgreSQL connection передаются явно.
+- [x] Dependencies создаются один раз на startup.
+- [x] Handlers и transport routers не создают DB connections.
+- [x] Handler/service не читают environment напрямую.
+- [x] Глобальный mutable dependency container не используется.
 
-- [x] Описать тип `Config`
-- [x] Добавить HTTP-настройки: `host` и `port`
-- [x] Добавить `environment`: например, `development` и `production`
-- [x] Добавить настройки PostgreSQL
-- [x] Добавить размер connection pool
-- [x] Добавить query timeout
-- [x] Добавить чтение переменных окружения
-- [x] Разделить обязательные и необязательные настройки
-- [x] Валидировать обязательную конфигурацию до startup
-- [x] Проверять, что port имеет допустимое значение
-- [x] Не хранить секреты в репозитории
-
-### Что изучаем
-
-- конфигурацию на старте приложения;
-- fail-fast для невалидной конфигурации;
-- разницу между dev и production;
-- почему handler и service не должны читать env напрямую.
-
-**Результат:** приложение получает проверенный `Config` до запуска серверов и зависимостей.
-
----
-
-## 6. Application dependencies / context
-
-Цель — явно определить, чем располагает приложение, и передавать зависимости через вызовы.
-
-- [x] Описать тип `Dependencies`
-- [x] Включить в него `Config`
-- [x] Включить в него PostgreSQL connection pool или тип доступа к базе
-- [x] Создавать `Dependencies` один раз на startup
-- [x] Передавать зависимости явно в router
-- [x] Передавать зависимости явно в handlers и services
-- [x] Не использовать глобальное mutable state для config или DB
-- [x] Не читать env из handler/service
-- [x] Не создавать connection pool внутри handler
-
-Концептуальная схема:
+Схема:
 
 ```text
-main
- ↓
+startup
+  ↓
 Config
- ↓
+  ↓
 Dependencies
- ↓
-router(request, dependencies)
- ↓
-handler
- ↓
-service
- ↓
-repository
+  ↓
+transport router
+  ↓
+application service
+  ↓
+repository / infrastructure
 ```
 
-### Что изучаем
+---
 
-- dependency injection без глобального контейнера;
-- явные зависимости и тестируемость;
-- границы `handler → service → repository`;
-- почему startup владеет ресурсами приложения.
+## 5. OTP supervision и startup
 
-**Результат:** любой handler получает нужные ресурсы явно и не зависит от скрытого глобального состояния.
+- [x] Есть главный startup `roxy_application.start`.
+- [x] PostgreSQL pool добавляется в supervision tree.
+- [x] HTTP server запускается через `mist.supervised`.
+- [x] Используется `RestForOne`, потому что HTTP зависит от DB startup.
+- [x] Настроена restart tolerance root supervisor.
+- [x] Поведение падения supervised child покрыто OTP tests.
+- [x] Процесс entrypoint остаётся живым после запуска supervision tree.
+
+Graceful shutdown и deployment-level drain policy относятся к production checklist и требуют отдельной runtime/integration проверки.
 
 ---
 
-## 7. Supervision tree и запуск приложения
+## 6. HTTP pipeline
 
-Цель — запустить backend через OTP-подход, а не набор независимых вызовов.
-
-- [x] Описать главный startup приложения
-- [x] Создать supervision tree
-- [x] Добавить в supervisor PostgreSQL connection pool
-- [x] Добавить в supervisor HTTP-сервер через `mist.supervised`
-- [x] Определить порядок запуска компонентов
-- [x] Использовать подходящую стратегию, например `RestForOne`, когда порядок зависимостей важен
-- [x] Задать restart tolerance для root supervisor
-- [x] Проверить поведение при падении дочернего процесса
-- [x] Настроить graceful shutdown
-- [x] Убедиться, что приложение не завершается сразу после запуска
-
-### Что изучаем
-
-- процессы BEAM;
-- supervisors и стратегии перезапуска;
-- supervisor как владелец жизненного цикла компонентов;
-- отличие `process.sleep_forever` от нормального OTP-запуска;
-- почему pool должен быть запущен до компонентов, которые от него зависят.
-
-**Результат:** backend запускается и завершается как OTP-приложение.
-
----
-
-## 8. Middleware pipeline и HTTP boundary
-
-Цель — подготовить единый и безопасный путь обработки каждого HTTP-запроса.
-
-Порядок pipeline зафиксирован явно:
+Текущий HTTP pipeline:
 
 ```text
-Request
-   ↓
-generate request_id
-   ↓
-logging wrapper start
-   ↓
+request
+  ↓
+TransportContext / request_id
+  ↓
+body/file limits
+  ↓
+HTTP logging
+  ↓
+CORS
+  ↓
+safe crash boundary
+  ↓
 HEAD handling
-   ↓
-crash boundary
-   ↓
-global safety limits
-   ↓
-router
-   ↓
-route policy:
-  authentication
-  coarse route authorization
-  content-type contract
-  body parsing
-   ↓
-handler / service
-   ↓
-resource-level authorization
-   ↓
-API response/error normalization
-   ↓
-add X-Request-ID
-   ↓
-logging wrapper finish
+  ↓
+route lookup
+  ↓
+explicit method check
+  ↓
+session extraction
+  ↓
+access policy
+  ↓
+route body contract
+  ↓
+handler
+  ↓
+HTTP error/response mapping
+  ↓
+X-Request-ID
 ```
 
-### Инварианты
+- [x] Каждый HTTP route имеет обязательные `methods`, `access`, `body` и handler.
+- [x] `Public` не является default policy.
+- [x] Unknown route не становится public fallback.
+- [x] HTTP body и file limits настраиваются до router/business logic.
+- [x] Content-Type проверяется только для `Json` и `Multipart` routes.
+- [x] Media type сравнивается строго, с поддержкой parameters вроде `charset`.
+- [x] Unsupported content type маппится в `415`.
+- [x] HTTP errors используют `HttpError` и единый JSON renderer.
+- [x] Crash response не раскрывает stack trace.
+- [x] Тестовый crash route существует только в test fixture.
 
-- Каждый HTTP response, включая `404`, `405`, `413`, `415` и `500`, содержит `X-Request-ID`.
-- `HEAD` использует тот же route и ту же security policy, что соответствующий `GET`, и отличается только отсутствием response body.
-- `HEAD` не является способом обойти authentication, authorization или будущие rate limits.
-- API response/error normalization является общей boundary для всего inner pipeline, а не только для handler-а: она нормализует ошибки router, route policy, body parsing и handler/service.
-- Resource-level authorization может выполняться после загрузки ресурса в handler/service. Например: `authentication → load Post → can_delete_post(user, post) → delete`.
-
-
-- [x] Подключить обработку `HEAD`
-  - Глобально через Wisp `handle_head` для каждого route с `GET`.
-  - При наличии `GET` в `Allow` также указывать `HEAD`.
-  - `HEAD` использует тот же route и ту же policy, что соответствующий `GET`, но без response body.
-- [x] Добавить `request_id` в request context
-  - Генерировать ID только на сервере.
-  - Входящий `X-Request-ID` игнорировать.
-  - Использовать отдельный `RequestContext`, не `Dependencies`.
-  - Возвращать ID в `X-Request-ID`.
-- [x] Ограничить максимальный размер request body
-  - `max_body_size = 1 MiB` одинаково в development и production.
-  - Route-specific override отложить до появления реальной необходимости.
-  - Значение вынесено в `http/protocol/limits.gleam`.
-- [x] Ограничить максимальный размер загружаемых файлов
-  - `max_files_size = 32 MiB` суммарно на multipart request как future guard.
-  - Не строить дополнительную upload-инфраструктуру до появления upload feature.
-  - Per-file и image-count limits определить вместе с upload feature.
-  - Основные uploads планировать через presigned S3.
-- [x] Определить поведение для неподдерживаемого `Content-Type`
-  - Проверять только на routes с body contract.
-  - `Json` требует JSON, `Multipart` требует `multipart/form-data`, `NoBody` ничего не требует.
-  - Принимать `application/json; charset=utf-8`.
-  - Контракт хранится в декларации `Route`.
-- [x] Возвращать `413 Payload Too Large` для слишком большого body
-  - Лимит Wisp настроен глобально.
-  - `PayloadTooLarge` добавлен в HTTP route error model и единый JSON API error boundary.
-  - JSON API error boundary покрыт protocol tests; фактический body-read integration test добавить вместе с первым JSON/body route.
-- [x] Возвращать `415 Unsupported Media Type` для неподдерживаемого content type
-  - Route-specific policy возвращает `errors.UnsupportedMediaType`.
-  - Ошибка проходит через общий error boundary и будет нормализована в единый JSON API error.
-- [x] Добавить базовое логирование запроса
-  - `timestamp`, `request_id`, `method`, `path`, `status`, `duration_ms`.
-  - Не логировать raw query string и body.
-  - User-Agent и IP отложить до настройки trusted proxy.
-  - Обычные `2xx/3xx/4xx` — `INFO`, неожиданные `5xx` — `ERROR`.
-  - Реализовано внешним `logging` middleware wrapper.
-- [x] Добавить `rescue_crashes`
-  - Покрывает весь inner pipeline: middleware, router, route policy, body parsing, handler/service.
-  - Crash → безопасный JSON `500`, request ID и server-side stack trace.
-  - Stack trace клиенту не возвращать ни в DEV, ни в PROD.
-  - Panic path дополнительно нормализуется после `wisp.rescue_crashes`, чтобы сохранить единый JSON error format и `X-Request-ID`.
-- [x] Определить порядок middleware
-  - Зафиксирован: `request_id → logging wrapper start → HEAD handling → crash boundary → global limits → router → route policy → handler/service → resource-level authorization → API response/error normalization → X-Request-ID → logging wrapper finish`.
-  - `Content-Type` и body parsing остаются route-specific.
-  - Authentication и coarse route authorization выполняются до handler/service; resource-level authorization может выполняться после загрузки ресурса внутри handler/service.
-  - Порядок реализован в `http/router.gleam`; crash boundary дополнительно нормализует panic response.
-- [x] Проверить, что ошибка handler-а не ломает весь сервер
-  - Unit test через Wisp добавлен в `test/http/rescue_test.gleam`.
-  - Mist integration test добавлен в `test/http/integration_test.gleam`: test-only `/test/crash` → `500`, затем `/health` → `200`.
-  - Test route существует только внутри integration fixture и не добавлен в production router.
-- [x] Не добавлять static file serving: backend на этом этапе API-only
-  - Frontend обслуживается отдельно через Lustre/Nginx/CDN.
-  - `wisp.serve_static` не использовать.
-
-### Что изучаем
-
-- middleware как цепочку функций;
-- порядок выполнения middleware;
-- HTTP boundary и раннюю валидацию запроса;
-- разницу между ошибкой запроса и падением приложения;
-- почему middleware не должен содержать бизнес-правила.
-
-**Результат:** любой запрос проходит через единый pipeline с ограничениями и защитой.
+Ограничение текущего этапа: production routes пока используют `NoBody`, поэтому полноценный JSON parsing и фактический body-read `413` будут проверены вместе с первой body feature.
 
 ---
 
-## 9. Route security policy
+## 7. WebSocket pipeline
 
-Цель — сразу зафиксировать принцип protected by default, не внедряя пока полноценный SSO.
+```text
+request
+  ↓
+explicit route lookup
+  ↓
+explicit method check
+  ↓
+Origin validation
+  ↓
+Upgrade header validation
+  ↓
+session extraction
+  ↓
+access policy
+  ↓
+handshake response или upgrade
+  ↓
+connection lifecycle
+  ↓
+message protocol handling
+```
 
-- [x] Разделить public и authenticated routes концептуально
-  - В `http/router.gleam` access является обязательным полем декларации `Route`: `Public`, `Authenticated` или `Permission(...)`.
-- [x] Явно пометить `GET /health` как public
-  - Production route registry содержит `GET /health` с `access: Public`.
-- [x] Зафиксировать, что `/api/*` в конечной архитектуре protected by default
-  - Новые API routes должны быть authenticated/permission-protected; public access допускается только через явный `Public` в декларации route.
-- [x] Требовать явного объявления для каждой public route
-  - `Route` не имеет access по умолчанию: каждый route обязан явно выбрать policy.
-- [x] Не добавлять новые public endpoints неявно
-  - Любой новый endpoint добавляется только через route registry с явным access marker; отсутствие route не превращается в public endpoint.
+- [x] WebSocket route имеет обязательные `methods`, `access` и handler.
+- [x] Origin проверяется до upgrade.
+- [x] Upgrade, Connection, Sec-WebSocket-Key и version проверяются до upgrade.
+- [x] Authentication/access policy выполняется до `mist.websocket`.
+- [x] WebSocket handshake errors отделены от established protocol errors.
+- [x] Handshake `405` возвращает `Allow`.
+- [x] Handshake получает request ID.
+- [x] Handshake completion log содержит method, path, status, duration и request ID.
+- [x] Oversized message закрывает конкретное соединение и логируется.
 
-
----
-
-## 10. Transport policy
-
-Цель — зафиксировать правила HTTP и WebSocket-транспорта до настройки production TLS.
-
-И зафиксировал несколько правил:
-
-один WebSocket connection = один отдельный process/actor;
-connection actor отвечает только за lifecycle конкретного клиента;
-connection actor не является source of truth;
-auth/authorization проверяются до upgrade;
-сообщения сначала можно оставить простыми Text/Binary envelope без бизнес-смысла;
-on_close обязательно чистит connection state;
-connection должен переживать только жизнь socket'а;
-долгоживущее shared state потом появится отдельными actors/services;
-WebSocket endpoint явный, например /ws;
-в DEV/internal network — ws://, в public production — wss://.
-
-- [ ] Добавить transport policy в архитектурную документацию или `Config`
-- [ ] Разрешить HTTP для localhost в development
-- [ ] Разрешить HTTP внутри trusted Docker network
-- [ ] Требовать HTTPS для публичного production
-- [ ] Разрешать `ws://` в development и internal network
-- [ ] Требовать `wss://` для публичного production
-- [ ] Не делать Mist backend публично доступным в обход reverse proxy
-- [ ] Оставить завершение TLS на HAProxy для будущего production-этапа
-
-Важно: проблема не в самом `0.0.0.0`, а в том, доступен ли незашифрованный порт из публичной сети.
-
-### Что изучаем
-
-- разницу между bind address и публичной доступностью;
-- Docker network и reverse proxy;
-- transport policy отдельно от реализации TLS;
-- почему TLS можно добавить позже, но правило нужно зафиксировать сейчас.
-
-**Результат:** понятно, где разрешён HTTP, а где приложение обязано работать через HTTPS.
+Ограничение: message size проверяется в application callback после передачи сообщения Mist. Transport-level pre-allocation limit нужно проверить и настроить отдельно, если это поддерживается текущей версией Mist.
 
 ---
 
-## 11. Единая модель ошибок
+## 8. Access и session
 
-Цель — не возвращать случайные строки и разные форматы ошибок из разных handler-ов.
+- [x] Общая access policy находится в `application/access.gleam`.
+- [x] Внутренние ошибки policy называются `Unauthenticated` и `Forbidden`.
+- [x] HTTP и WebSocket используют один `AccessError`, но разные boundary mappings.
+- [x] Cookie/header parsing находится в `transport/session.gleam`.
+- [x] Signed session verification находится в `application/services/session.gleam`.
+- [x] Missing session и invalid session не раскрываются клиенту.
+- [x] В логах различаются `session_missing` и `session_invalid` без записи token/cookie.
+- [x] Protected-by-default правило зафиксировано для новых API routes.
 
-- [ ] Описать `AppError`
-- [ ] Добавить общие категории `ValidationError`
-- [ ] Добавить `Unauthorized`
-- [ ] Добавить `Forbidden`
-- [ ] Добавить `NotFound`
-- [ ] Добавить `Conflict`
-- [ ] Добавить `InternalError`
-- [ ] Определить HTTP-статус для каждой категории
-- [ ] Сделать единый JSON-формат ошибки
-- [ ] Добавить поля `code`, `message` и `request_id`
-- [ ] Не возвращать наружу stack trace и внутренние детали
-- [ ] Не создавать заранее десятки конкретных business errors
-
-### Что изучаем
-
-- модель ошибок приложения;
-- преобразование ошибки в HTTP-ответ;
-- разницу между сообщением для клиента и деталями для логов;
-- API-контракт ошибок.
-
-**Результат:** ошибки маршрутизации, валидации и handler-ов возвращаются единообразно.
+Полноценные expiration, revocation, logout и OIDC lifecycle относятся к production/auth roadmap.
 
 ---
 
-## 12. Request ID и базовое логирование
+## 9. Error ownership
 
-Цель — уметь найти в логах всю информацию об одном запросе.
+Единого глобального `AppError` для всех уровней нет и не создаётся.
 
-- [x] Генерировать `request_id` для каждого запроса на сервере
-  - `http/request_context.new()` создаёт новый ID формата `req_...` для каждого запроса.
-- [x] Не доверять произвольному `X-Request-ID` от публичного клиента
-  - Входящий заголовок не используется: сервер всегда создаёт собственный ID.
-- [x] Передавать `request_id` через middleware и context
-  - Один `RequestContext` используется router, error handler и logging middleware.
-- [x] Возвращать его клиенту в заголовке `X-Request-ID`
-  - Заголовок добавляется к успешным, ошибочным и crash-response.
-- [x] Логировать method, path и status
-  - `http/middleware/logging.gleam` пишет их в key-value log entry.
-- [x] Логировать длительность запроса
-  - Middleware измеряет время выполнения pipeline и пишет `duration_ms`.
-- [x] Логировать ошибки вместе с `request_id`
-  - Ответы со статусом `500+` логируются на уровне `Error`; каждый log entry содержит `request_id`.
-- [x] Не записывать в логи секреты и чувствительные данные
-  - В базовом middleware не логируются body, headers, cookies, authorization или конфигурационные секреты; записываются только технические поля запроса.
-
-### Что изучаем
-
-- correlation ID;
-- структурированные логи;
-- связь HTTP-ответа и записи в логах;
-- минимальную наблюдаемость до появления бизнес-логики.
-
-**Результат:** клиент получает `X-Request-ID`, а запрос можно найти по нему в логах.
+- [x] HTTP errors находятся в `transport/http/protocol/http_errors.gleam`.
+- [x] WebSocket handshake errors находятся в `transport/websocket/handshake/validation.gleam`.
+- [x] Established WebSocket failures остаются в WebSocket protocol/handler ownership.
+- [x] Access errors имеют одно каноническое место в `application/access.gleam`.
+- [x] HTTP и WebSocket выполняют отдельные boundary mappings.
+- [x] Ошибки с одинаковым внешним status не объединяются без общей причины.
+- [x] HTTP `PayloadTooLarge` не объединён с WebSocket `MessageTooLarge`.
+- [x] Stack trace и internal details не возвращаются клиенту.
 
 ---
 
-## 13. PostgreSQL и connection pool
+## 10. Request ID и logging
 
-Цель — подключить базу как инфраструктурную зависимость, но пока не реализовывать бизнес-сущности.
-
-- [x] Добавить конфигурацию подключения к PostgreSQL
-  - `db/config.gleam` загружает URL, размер pool и timeout; в production настройки обязательны и валидируются.
-- [x] Запустить PostgreSQL connection pool через `pog`
-  - `db/pool.gleam` строит `pog` config и создаёт supervised pool.
-- [x] Добавить pool в supervision tree
-  - Pool добавляется в `RestForOne` supervisor перед HTTP child в `roxy_application.gleam`.
-- [x] Настроить явный конечный размер pool
-  - Размер задаётся через `DATABASE_POOL_SIZE` в production и равен `10` по умолчанию в development.
-- [x] Настроить query timeout
-  - `db/pool.execute` применяет `pog.timeout(...)` к каждому запросу.
-  - `dependencies.execute_query` передаёт в DB boundary значение `config.postgres.query_timeout`.
-  - `wait_until_ready` использует тот же timeout.
-- [x] Понять, почему pool имеет конечный размер
-  - Конечный pool ограничивает число одновременных соединений и нагрузку на PostgreSQL; запросы сверх доступной ёмкости проходят через очередь/ограничения pool.
-- [x] Проверить поведение при исчерпании pool
-  - Integration-тест `db/pool_integration_test.gleam` запускается при `APP_ENV=development`.
-  - Он берёт development URL из `db/defaults.gleam`, поднимает pool размером `1`, удерживает соединение через `pg_sleep` и проверяет отказ второго checkout по короткому timeout.
-  - Проверено командой `docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend gleam test` при healthy PostgreSQL в `database_internal`.
-- [x] Не создавать таблицы пользователей и постов на этом этапе
-  - Бизнес-сущности, миграции и repositories для пользователей/постов пока не добавлены.
-
-### Что изучаем
-
-- connection pool и ограниченность соединений;
-- роль `pog`;
-- supervised pool;
-- query timeout;
-- поведение приложения при недоступной зависимости;
-- почему handler не должен создавать DB connection.
-
-**Результат:** PostgreSQL connection pool находится под supervision и передаётся через `Dependencies`.
+- [x] Request ID генерируется сервером.
+- [x] Входящий `X-Request-ID` не принимается как authoritative value.
+- [x] HTTP responses, включая errors, содержат `X-Request-ID`.
+- [x] WebSocket handshake response содержит request ID.
+- [x] HTTP logs содержат timestamp, event, transport, request_id, method, path, status и duration.
+- [x] WebSocket handshake и connection logs содержат request_id.
+- [x] Body, cookies, tokens, authorization headers и secrets не логируются.
+- [x] Invalid session причины логируются без sensitive values.
 
 ---
 
+## 11. PostgreSQL pool
 
-## 15. Миграции и test setup
-
-Цель — подготовить повторяемую работу с базой и проверки foundation до первой бизнес-фичи.
-
-- [ ] Выбрать способ хранения SQL-миграций
-- [ ] Настроить механизм запуска миграций
-- [ ] Проверить запуск миграций на test database
-- [ ] Не создавать пустую миграцию только ради migration history
-- [ ] Создать первую реальную миграцию вместе с первой сущностью
-- [ ] Отдельно подготовить test database
-- [ ] Добавить unit-тесты для чистых функций foundation
-- [ ] Добавить integration-тест readiness с PostgreSQL
-- [ ] Добавить HTTP-тесты health/readiness и ошибок
-- [ ] Проверить ошибки подключения к базе
-
-### Что изучаем
-
-- зачем миграции должны быть содержательными;
-- отличие unit-, integration- и HTTP-тестов;
-- почему test database не должна быть dev database;
-- проверку инфраструктуры до появления бизнес-логики.
-
-**Результат:** базу можно подготовить повторяемо, а foundation проверяется тестами.
+- [x] PostgreSQL config загружается отдельно.
+- [x] `pog` pool создаётся на startup.
+- [x] Pool находится под supervision.
+- [x] Pool size конечный.
+- [x] Query timeout применяется к DB operations.
+- [x] Поведение pool exhaustion покрыто integration test при наличии PostgreSQL.
+- [x] Бизнес-таблицы, repositories и migrations до первой feature не создавались.
 
 ---
 
-## 16. Failure behaviour
+## 12. Тестовая проверка foundation
 
-Цель — не только настроить happy path, но и увидеть, как приложение ведёт себя при отказах.
-
-- [ ] Проверить запуск с отсутствующей обязательной env
-- [ ] Проверить запуск с невалидным port
-- [ ] Проверить запуск с невалидным `DATABASE_URL`
-- [ ] Проверить поведение при временно недоступном PostgreSQL
-- [ ] Проверить readiness при падении PostgreSQL
-- [ ] Проверить падение HTTP child process
-- [ ] Проверить восстановление supervised child
-- [ ] Проверить graceful SIGTERM
-- [ ] Проверить слишком большой HTTP body
-- [ ] Проверить неподдерживаемый `Content-Type`
-
-### Что изучаем
-
-- fail-fast конфигурации;
-- dependency failure;
-- supervision и восстановление процессов;
-- graceful shutdown;
-- поведение HTTP boundary при некорректном запросе.
-
-**Результат:** поведение backend при основных отказах известно и проверено, а не предполагается.
+- [x] Access policy tests.
+- [x] HTTP route/error mapping tests.
+- [x] HTTP integration tests для `404`, `405`, `HEAD`, CORS и crash behavior.
+- [x] WebSocket handshake validation/mapping tests.
+- [x] WebSocket integration tests для successful connection, forbidden origin, invalid method, malformed handshake и oversized message.
+- [x] OTP supervision tests.
+- [x] Configuration validation tests.
+- [x] `gleam format --check` проходит.
+- [x] `gleam check` проходит.
+- [x] `gleam test` проходит: текущий результат — `56 passed, no failures`.
 
 ---
 
-## 17. Definition of Foundation
+## Что не является завершённым foundation и переносится дальше
 
-Foundation считается завершённым, когда выполнены все пункты ниже.
+`/health` — liveness endpoint, а `/ready` — readiness endpoint, который проверяет PostgreSQL через pool и возвращает `503`, если зависимость недоступна. Readiness входит в foundation и реализован.
 
-### Runtime
+Следующие пункты не считаются забытыми или «случайно не отмеченными». Они намеренно вынесены из foundation scope:
 
-- [ ] backend запускается одной понятной командой;
-- [ ] приложение запускается как OTP application;
-- [ ] Mist находится под supervision;
-- [ ] graceful shutdown проверен;
-- [ ] восстановление supervised child проверено.
+- SQL migrations и отдельная test database;
+- первая domain/business feature;
+- repositories и resource-level authorization;
+- полноценный JSON/multipart body parsing;
+- session expiration/revocation/logout/OIDC;
+- rate limiting и security headers;
+- TLS/WSS termination и reverse proxy hardening;
+- production graceful drain;
+- metrics и полноценная production observability;
+- S3, jobs, webhooks, ETS, distributed realtime.
 
-### Configuration
-
-- [ ] существует один типизированный `Config`;
-- [ ] обязательная конфигурация валидируется до startup;
-- [ ] secrets отсутствуют в коде и git;
-- [ ] production transport policy зафиксирована.
-
-### Dependencies
-
-- [ ] существует тип `Dependencies`;
-- [ ] config и PostgreSQL pool передаются явно;
-- [ ] handler не читает env;
-- [ ] handler не создаёт DB connections;
-- [ ] определены границы handler/service/repository.
-
-### HTTP
-
-- [ ] Wisp router работает;
-- [ ] `HEAD` обрабатывается корректно;
-- [ ] неизвестный route возвращает `404`;
-- [ ] неправильный method возвращает `405`;
-- [ ] request body имеет лимит;
-- [ ] file body имеет лимит;
-- [ ] неподдерживаемый content type обрабатывается;
-- [ ] oversized request возвращает `413`;
-- [ ] неподдерживаемый media type возвращает `415`;
-- [ ] panic/crash handler-а не валит server;
-- [ ] static files не являются частью foundation.
-
-### Route security
-
-- [x] public и protected routes разделены концептуально;
-- [x] `/health` явно public;
-- [x] новые public routes требуют явного объявления;
-- [x] mutation endpoint не становится временно публичным без dev-only ограничения;
-- [x] `/api/*` protected by default зафиксирован в route policy.
-
-### Errors / observability
-
-- [ ] существует единый `AppError`;
-- [ ] существуют категории validation, unauthorized, forbidden, not found, conflict и internal;
-- [ ] существует единый error response;
-- [ ] каждый request имеет `request_id`;
-- [ ] `request_id` возвращается в `X-Request-ID`;
-- [ ] логируются method, path, status и duration;
-- [ ] secrets не попадают в logs.
-
-### Database
-
-- [ ] PostgreSQL connection pool находится под supervision;
-- [ ] pool имеет ограниченный размер;
-- [ ] query timeout задан;
-- [ ] `/health` и readiness endpoint разделены;
-- [ ] readiness использует дешёвую проверку с коротким timeout;
-- [ ] миграции можно запускать повторяемо;
-- [ ] test database отделена от dev database.
-
-### Verification
-
-- [ ] `gleam check` проходит;
-- [ ] tests проходят;
-- [ ] проверено отсутствие обязательной env;
-- [ ] проверен невалидный port;
-- [ ] проверено падение DB;
-- [ ] проверено падение supervised child;
-- [ ] проверено восстановление child;
-- [ ] проверен graceful shutdown;
-- [ ] проверен oversized HTTP request;
-- [ ] проверен неподдерживаемый content type.
+Правила для этих задач находятся в production checklist и должны выполняться вместе с соответствующей feature, а не добавляться заранее пустыми модулями.
 
 ---
 
-## Что начинается после foundation
+## Следующий этап
 
-После выполнения этого файла начинается вертикальная бизнес-фича. Она проходит полный путь:
+Первая бизнес-фича должна пройти вертикальный путь:
 
 ```text
 migration
- ↓
+  ↓
 domain
- ↓
+  ↓
 repository
- ↓
-service
- ↓
-handler
- ↓
-route
- ↓
-tests
+  ↓
+application service
+  ↓
+HTTP handler
+  ↓
+route with explicit methods/access/body contract
+  ↓
+resource-level authorization
+  ↓
+integration tests
 ```
 
-Первую фичу лучше начать с `Create Post` и `Get/List Posts`.
-
-Для учебного этапа mutation endpoint должен быть либо:
-
-- защищён реальным `CurrentUser`;
-- либо явно dev-only и недоступен в production.
-
-Не следует привыкать к модели «сделаем публичным сейчас, защитим потом».
-
-Следующие технологии добавляются только вместе с задачей:
-
-- изображения → S3 / MinIO;
-- SSO → sessions и auth middleware;
-- комментарии и реакции → authorization;
-- Miro-доска → WebSocket;
-- realtime-нагрузка → actors;
-- большой поток board-сообщений → бинарный протокол;
-- outgoing webhooks → background workers и outbox;
-- два backend-инстанса → HAProxy и отдельная работа с распределённым состоянием.
+Mutation route нельзя делать public «временно». Он должен быть `Authenticated` или `Permission(...)`, либо явно ограничен development-only policy, недоступной в production.

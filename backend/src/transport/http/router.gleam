@@ -7,6 +7,7 @@ import gleam/list
 import gleam/option
 import gleam/string
 import transport/http/handlers/health
+import transport/http/handlers/readiness
 import transport/http/middleware/cors
 import transport/http/middleware/error_handler
 import transport/http/middleware/logging
@@ -41,6 +42,13 @@ const routes = [
     body: NoBody,
     access: access.Public,
     handler: health.handle,
+  ),
+  Route(
+    path: "/ready",
+    methods: [http.Get],
+    body: NoBody,
+    access: access.Public,
+    handler: readiness.handle,
   ),
 ]
 

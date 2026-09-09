@@ -13,3 +13,5 @@ pub const unsupported_media_type = 415
 pub const payload_too_large = 413
 
 pub const internal_server_error = 500
+
+pub const service_unavailable = 503

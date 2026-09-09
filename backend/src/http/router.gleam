@@ -5,6 +5,7 @@ import gleam/list
 import gleam/option
 import gleam/string
 import http/handlers/health
+import http/middleware/cors
 import http/middleware/error_handler
 import http/middleware/logging
 import http/protocol/limits
@@ -56,15 +57,17 @@ pub fn handle(
     |> wisp.set_max_files_size(limits.max_files_size)
   let response =
     logging.handle(request, context, fn() {
-      error_handler.handle(request, context, fn() {
-        Ok(
-          wisp.handle_head(request, fn(request) {
-            case dispatch(request, dependencies, context) {
-              Ok(response) -> response
-              Error(error) -> error_handler.response(error, context)
-            }
-          }),
-        )
+      cors.handle(request, dependencies.config.cors, context, fn() {
+        error_handler.handle(request, context, fn() {
+          Ok(
+            wisp.handle_head(request, fn(request) {
+              case dispatch(request, dependencies, context) {
+                Ok(response) -> response
+                Error(error) -> error_handler.response(error, context)
+              }
+            }),
+          )
+        })
       })
     })
   request_context.add_request_id(response, context)

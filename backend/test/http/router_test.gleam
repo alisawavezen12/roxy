@@ -1,4 +1,5 @@
 import config/app
+import config/cors
 import config/environment
 import db/config as postgres_config_module
 import dependencies
@@ -23,6 +24,11 @@ fn test_dependencies() -> dependencies.Dependencies {
       port: 8080,
       environment: environment.Development,
       secret_key_base: "test-secret-key-base-that-is-long-enough-for-wisp",
+      cors: cors.CorsConfig(
+        allowed_origins: ["http://localhost:1234"],
+        allowed_methods: [http.Get, http.Head],
+        allowed_headers: ["Content-Type"],
+      ),
       postgres: postgres_config(),
     )
   dependencies.new(config, pog.named_connection(process.new_name("test_pool")))
@@ -105,6 +111,123 @@ pub fn health_route_supports_head_test() {
 
   response.status
   |> should.equal(200)
+}
+
+pub fn allowed_origin_receives_credentialed_cors_headers_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Get)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  list.key_find(response.headers, "access-control-allow-origin")
+  |> should.equal(Ok("http://localhost:1234"))
+
+  list.key_find(response.headers, "access-control-allow-credentials")
+  |> should.equal(Ok("true"))
+
+  list.key_find(response.headers, "vary")
+  |> should.equal(Ok("Origin"))
+}
+
+pub fn origin_port_must_match_exactly_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Get)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "http://localhost:4321")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(200)
+
+  list.key_find(response.headers, "access-control-allow-origin")
+  |> should.equal(Error(Nil))
+}
+
+pub fn valid_preflight_returns_explicit_policy_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Options)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_header("access-control-request-method", "GET")
+    |> request.set_header("access-control-request-headers", "Content-Type")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(204)
+
+  list.key_find(response.headers, "access-control-allow-origin")
+  |> should.equal(Ok("http://localhost:1234"))
+
+  list.key_find(response.headers, "access-control-allow-credentials")
+  |> should.equal(Ok("true"))
+
+  list.key_find(response.headers, "access-control-allow-methods")
+  |> should.equal(Ok("GET, HEAD"))
+
+  list.key_find(response.headers, "access-control-allow-headers")
+  |> should.equal(Ok("Content-Type"))
+
+  list.key_find(response.headers, "vary")
+  |> should.equal(Ok("Origin"))
+}
+
+pub fn preflight_rejects_unlisted_request_header_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Options)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_header("access-control-request-method", "GET")
+    |> request.set_header("access-control-request-headers", "Authorization")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(403)
+
+  list.key_find(response.headers, "access-control-allow-origin")
+  |> should.equal(Error(Nil))
+}
+
+pub fn preflight_rejects_unlisted_method_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Options)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_header("access-control-request-method", "POST")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(403)
 }
 
 pub fn health_route_rejects_unsupported_method_test() {

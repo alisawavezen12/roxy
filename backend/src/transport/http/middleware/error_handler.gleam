@@ -60,6 +60,8 @@ pub fn response(
         "Unsupported media type",
         context,
       )
+    http_errors.InvalidBody ->
+      api_errors.response(400, "invalid_body", "Invalid request body", context)
     http_errors.PayloadTooLarge -> api_errors.payload_too_large(context)
     http_errors.Access(error) -> access_response(error, context)
   }

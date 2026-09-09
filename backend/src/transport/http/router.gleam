@@ -2,10 +2,10 @@ import application/dependencies
 
 import application/access
 import gleam/http
-import gleam/http/request as http_request
+
 import gleam/list
 import gleam/option
-import gleam/string
+
 import transport/http/handlers/health
 import transport/http/handlers/readiness
 import transport/http/middleware/cors
@@ -13,25 +13,23 @@ import transport/http/middleware/error_handler
 import transport/http/middleware/logging
 import transport/http/protocol/http_errors as errors
 import transport/http/protocol/limits
+import transport/http/request_body
 import transport/http/request_id
 import transport/session
 import transport/transport_context
 import wisp
 
-type Body {
-  NoBody
-  Json
-  Multipart
-}
-
 type Route {
   Route(
     path: String,
     methods: List(http.Method),
-    body: Body,
+    body: request_body.Contract,
     access: access.Access,
-    handler: fn(dependencies.Dependencies, transport_context.TransportContext) ->
-      wisp.Response,
+    handler: fn(
+      dependencies.Dependencies,
+      transport_context.TransportContext,
+      request_body.ParsedBody,
+    ) -> wisp.Response,
   )
 }
 
@@ -39,16 +37,16 @@ const routes = [
   Route(
     path: "/health",
     methods: [http.Get],
-    body: NoBody,
+    body: request_body.NoBody,
     access: access.Public,
-    handler: health.handle,
+    handler: health_route,
   ),
   Route(
     path: "/ready",
     methods: [http.Get],
-    body: NoBody,
+    body: request_body.NoBody,
     access: access.Public,
-    handler: readiness.handle,
+    handler: readiness_route,
   ),
 ]
 
@@ -111,40 +109,33 @@ fn authorize(
   }
 }
 
+fn health_route(
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  health.handle(dependencies, context)
+}
+
+fn readiness_route(
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  readiness.handle(dependencies, context)
+}
+
 fn check_body(
   route: Route,
   request: wisp.Request,
   dependencies: dependencies.Dependencies,
   context: transport_context.TransportContext,
 ) -> Result(wisp.Response, errors.HttpError) {
-  case route.body {
-    NoBody -> Ok(route.handler(dependencies, context))
-    Json ->
-      case http_request.get_header(request, "content-type") {
-        Ok(content_type) ->
-          case media_type_is(content_type, "application/json") {
-            True -> Ok(route.handler(dependencies, context))
-            False -> Error(errors.UnsupportedMediaType)
-          }
-        Error(_) -> Error(errors.UnsupportedMediaType)
-      }
-    Multipart ->
-      case http_request.get_header(request, "content-type") {
-        Ok(content_type) ->
-          case media_type_is(content_type, "multipart/form-data") {
-            True -> Ok(route.handler(dependencies, context))
-            False -> Error(errors.UnsupportedMediaType)
-          }
-        Error(_) -> Error(errors.UnsupportedMediaType)
-      }
-  }
-}
-
-fn media_type_is(content_type: String, expected: String) -> Bool {
-  case string.split(content_type, ";") {
-    [media_type, ..] -> string.lowercase(string.trim(media_type)) == expected
-    [] -> False
-  }
+  let response =
+    request_body.parse(request, route.body, context, fn(body) {
+      route.handler(dependencies, context, body)
+    })
+  Ok(response)
 }
 
 fn allowed_methods(methods: List(http.Method)) -> List(http.Method) {

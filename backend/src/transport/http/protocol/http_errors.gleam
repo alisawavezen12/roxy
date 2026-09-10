@@ -8,5 +8,6 @@ pub type HttpError {
   InvalidBody
   PayloadTooLarge
   TooManyRequests
+  CsrfForbidden
   Access(access.AccessError)
 }

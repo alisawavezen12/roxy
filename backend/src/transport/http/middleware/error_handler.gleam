@@ -70,6 +70,13 @@ pub fn response(
         "Too many requests",
         context,
       )
+    http_errors.CsrfForbidden ->
+      api_errors.response(
+        status.forbidden,
+        "csrf_forbidden",
+        "Request origin is not allowed",
+        context,
+      )
     http_errors.Access(error) -> access_response(error, context)
   }
 }

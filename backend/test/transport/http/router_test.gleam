@@ -284,6 +284,49 @@ pub fn preflight_rejects_unlisted_method_test() {
   |> should.equal(403)
 }
 
+pub fn cross_site_unsafe_request_is_rejected_before_routing_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Post)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "https://evil.example")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(403)
+  case response.body {
+    wisp.Text(body) ->
+      body
+      |> string.contains("csrf_forbidden")
+      |> should.equal(True)
+    _ -> panic as "Expected JSON text response"
+  }
+}
+
+pub fn allowed_origin_unsafe_request_reaches_routing_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Post)
+    |> request.set_path("/health")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status
+  |> should.equal(405)
+  list.key_find(response.headers, "access-control-allow-origin")
+  |> should.equal(Ok("http://localhost:1234"))
+}
+
 pub fn health_route_rejects_unsupported_method_test() {
   let request =
     request.new()

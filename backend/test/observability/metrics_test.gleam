@@ -40,6 +40,7 @@ pub fn metrics_track_websocket_connections_and_events_test() {
   metrics.record(metrics, metrics.SessionMissing)
   metrics.record(metrics, metrics.SessionInvalid)
   metrics.record(metrics, metrics.SessionStoreFailed)
+  metrics.record(metrics, metrics.CsrfRejected)
   metrics.record(metrics, metrics.DbProbeFailed)
 
   let snapshot = metrics.snapshot(metrics)
@@ -54,6 +55,8 @@ pub fn metrics_track_websocket_connections_and_events_test() {
   snapshot.session_invalid
   |> should.equal(1)
   snapshot.session_store_failed
+  |> should.equal(1)
+  snapshot.csrf_rejected
   |> should.equal(1)
   snapshot.db_probe_failed
   |> should.equal(1)

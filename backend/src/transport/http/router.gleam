@@ -9,6 +9,7 @@ import gleam/option
 import transport/http/handlers/health
 import transport/http/handlers/readiness
 import transport/http/middleware/cors
+import transport/http/middleware/csrf
 import transport/http/middleware/error_handler
 import transport/http/middleware/logging
 import transport/http/middleware/security_headers
@@ -64,13 +65,21 @@ pub fn handle(
     logging.handle(request, context, fn() {
       cors.handle(request, dependencies.config.origins, context, fn() {
         error_handler.handle(request, context, fn() {
-          Ok(
-            wisp.handle_head(request, fn(request) {
-              case dispatch(request, dependencies, context) {
-                Ok(response) -> response
-                Error(error) -> error_handler.response(error, context)
-              }
-            }),
+          csrf.handle(
+            request,
+            dependencies.config.origins,
+            dependencies.config.transport,
+            context,
+            fn(request) {
+              Ok(
+                wisp.handle_head(request, fn(request) {
+                  case dispatch(request, dependencies, context) {
+                    Ok(response) -> response
+                    Error(error) -> error_handler.response(error, context)
+                  }
+                }),
+              )
+            },
           )
         })
       })

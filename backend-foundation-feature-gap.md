@@ -65,7 +65,7 @@ HexDocs оказался недоступен; использованы офиц
 
 | Пункт | Статус | Причина |
 |---|---|---|
-| Cookie/private response cache policy | **Consider later** | Добавить явный `Cache-Control`, обычно `no-store` для session/token responses, вместе с первыми такими ответами. Сейчас нет выдачи сессий и private HTTP данных; глобально запрещать caching заранее не требуется. |
+
 | DB statement/transaction budgets | **Consider later** | `pog.timeout` — не PostgreSQL `statement_timeout` и не строгий end-to-end deadline; внутри `pog.transaction` индивидуальные query timeouts не применяются. С первыми долгими/конкурентными транзакциями задать statement/lock/transaction policy, не считая текущий конфигурационный timeout универсальной отменой SQL. |
 | Обязательный изолированный integration-test job | **Consider later** | Базовый harness есть, но DB migration test допускает пропуск при недоступной DB и использует dev DB. До CI/release gate добавить отдельную test DB и режим, где отсутствие DB означает failure, плюс lifecycle/security regression tests для новых механизмов. |
 | Multi-instance quotas и operational hardening | **Consider later** | Distributed limiter, per-user quotas, secret rotation overlap, DB TLS для внешней DB, backup/restore и контейнерные resource budgets зависят от deployment. Их нужно закрывать перед соответствующей эксплуатацией, а не объявлять блокерами любой бизнес-фичи. |
@@ -83,4 +83,4 @@ HexDocs оказался недоступен; использованы офиц
 
 **Important but non-blocking:** ingress и pre-decode WS budgets, idle WS reclaim, production TLS/WSS/proxy-client contract, production migration step, graceful drain, доступный вывод metrics; первые четыре обязательны до соответствующего публичного трафика.
 
-**Can safely be added later:** private-response caching policy вместе с такими ответами, DB workload-specific budgets, isolated CI integration gate, distributed quotas, tracing и дополнительные HTTP conveniences — до появления соответствующих требований.
+**Can safely be added later:** DB workload-specific budgets, isolated CI integration gate, distributed quotas, tracing и дополнительные HTTP conveniences — до появления соответствующих требований.

@@ -8,6 +8,7 @@ import gleam/option
 
 import transport/http/handlers/health
 import transport/http/handlers/readiness
+import transport/http/middleware/cache_policy
 import transport/http/middleware/cors
 import transport/http/middleware/csrf
 import transport/http/middleware/error_handler
@@ -64,8 +65,9 @@ pub fn handle(
   let response =
     logging.handle(request, context, fn() {
       cors.handle(request, dependencies.config.origins, context, fn() {
-        error_handler.handle(request, context, fn() {
-          csrf.handle(
+        cache_policy.handle(request, fn() {
+          error_handler.handle(request, context, fn() {
+            csrf.handle(
             request,
             dependencies.config.origins,
             dependencies.config.transport,
@@ -79,8 +81,9 @@ pub fn handle(
                   }
                 }),
               )
-            },
-          )
+              },
+            )
+          })
         })
       })
     })

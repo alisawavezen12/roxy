@@ -41,6 +41,14 @@ pub fn execute_query(
   pool.execute(postgres, sql, config.postgres.query_timeout)
 }
 
+pub fn transaction(
+  dependencies: Dependencies,
+  callback: fn(pog.Connection) -> Result(value, error),
+) -> Result(value, pog.TransactionError(error)) {
+  let Dependencies(postgres:, ..) = dependencies
+  pog.transaction(postgres, callback)
+}
+
 pub fn postgres_ready(dependencies: Dependencies) -> Bool {
   let Dependencies(config:, postgres:, ..) = dependencies
   case

@@ -37,6 +37,10 @@ pub fn production_reads_environment_test() {
   envoy.set("DATABASE_URL", "postgres://user:password@db/app")
   envoy.set("DATABASE_POOL_SIZE", "20")
   envoy.set("DATABASE_QUERY_TIMEOUT_MS", "7000")
+  envoy.set("DATABASE_STATEMENT_TIMEOUT_MS", "4000")
+  envoy.set("DATABASE_LOCK_TIMEOUT_MS", "1000")
+  envoy.set("DATABASE_TRANSACTION_TIMEOUT_MS", "15000")
+  envoy.set("DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS", "5000")
   envoy.set(
     "SECRET_KEY_BASE",
     "production-secret-key-base-that-is-long-enough-for-wisp-xxxxxxxxxxxx",
@@ -75,6 +79,10 @@ pub fn production_requires_cors_origins_test() {
   envoy.set("DATABASE_URL", "postgres://user:password@db/app")
   envoy.set("DATABASE_POOL_SIZE", "20")
   envoy.set("DATABASE_QUERY_TIMEOUT_MS", "7000")
+  envoy.set("DATABASE_STATEMENT_TIMEOUT_MS", "4000")
+  envoy.set("DATABASE_LOCK_TIMEOUT_MS", "1000")
+  envoy.set("DATABASE_TRANSACTION_TIMEOUT_MS", "15000")
+  envoy.set("DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS", "5000")
   envoy.set(
     "SECRET_KEY_BASE",
     "production-secret-key-base-that-is-long-enough-for-wisp-xxxxxxxxxxxx",
@@ -135,6 +143,10 @@ fn configure_production() -> Nil {
   envoy.set("DATABASE_URL", "postgres://user:password@db/app")
   envoy.set("DATABASE_POOL_SIZE", "20")
   envoy.set("DATABASE_QUERY_TIMEOUT_MS", "7000")
+  envoy.set("DATABASE_STATEMENT_TIMEOUT_MS", "4000")
+  envoy.set("DATABASE_LOCK_TIMEOUT_MS", "1000")
+  envoy.set("DATABASE_TRANSACTION_TIMEOUT_MS", "15000")
+  envoy.set("DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS", "5000")
   envoy.set(
     "SECRET_KEY_BASE",
     "production-secret-key-base-that-is-long-enough-for-wisp-xxxxxxxxxxxx",

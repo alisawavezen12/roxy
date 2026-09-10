@@ -38,3 +38,14 @@ schema_migrations(version, applied_at)
 ```
 
 Each migration and its history record are committed in one PostgreSQL transaction. A failed migration is rolled back and is not recorded as applied.
+
+## Database time budgets
+
+The backend applies four PostgreSQL session budgets to every pool connection:
+
+- `statement_timeout`: maximum server-side execution time of one SQL statement;
+- `lock_timeout`: maximum time spent waiting for a lock;
+- `transaction_timeout`: maximum lifetime of an explicit or implicit transaction;
+- `idle_in_transaction_session_timeout`: maximum idle time while a transaction is open.
+
+Production values are required through `DATABASE_STATEMENT_TIMEOUT_MS`, `DATABASE_LOCK_TIMEOUT_MS`, `DATABASE_TRANSACTION_TIMEOUT_MS` and `DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS`. They are applied through `pog.connection_parameter` when the pool starts, so they also cover `pog.transaction` callbacks. `DATABASE_QUERY_TIMEOUT_MS` remains the client-side pog checkout/query budget and is not a substitute for PostgreSQL server-side cancellation.

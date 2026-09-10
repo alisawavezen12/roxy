@@ -72,6 +72,10 @@ fn dependencies(https: Bool) -> dependencies.Dependencies {
         url: "postgres://test",
         pool_size: 1,
         query_timeout: 1000,
+        statement_timeout: 800,
+        lock_timeout: 100,
+        transaction_timeout: 2000,
+        idle_in_transaction_timeout: 500,
       ),
     )
   dependencies.new(

@@ -15,7 +15,15 @@ pub fn postgres_pool_exhaustion_integration_test() {
 }
 
 fn run_integration_test(url: String) {
-  let config = db_config.PostgresConfig(url:, pool_size: 1, query_timeout: 100)
+  let config = db_config.PostgresConfig(
+    url:,
+    pool_size: 1,
+    query_timeout: 100,
+    statement_timeout: 80,
+    lock_timeout: 20,
+    transaction_timeout: 200,
+    idle_in_transaction_timeout: 100,
+  )
   let assert Ok(#(connection, child)) = pool.build(config)
   let assert Ok(started) =
     supervisor.new(supervisor.OneForOne)

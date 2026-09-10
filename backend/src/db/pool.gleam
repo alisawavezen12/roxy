@@ -1,5 +1,6 @@
 import db/config as db_config
 import gleam/erlang/process
+import gleam/int
 import gleam/result
 import pog
 
@@ -12,7 +13,25 @@ pub fn build(
     |> result.replace_error("Invalid DATABASE_URL"),
   )
 
-  let pool_config = pog.pool_size(pool_config, config.pool_size)
+  let pool_config =
+    pool_config
+    |> pog.pool_size(config.pool_size)
+    |> pog.connection_parameter(
+      "statement_timeout",
+      int.to_string(config.statement_timeout),
+    )
+    |> pog.connection_parameter(
+      "lock_timeout",
+      int.to_string(config.lock_timeout),
+    )
+    |> pog.connection_parameter(
+      "transaction_timeout",
+      int.to_string(config.transaction_timeout),
+    )
+    |> pog.connection_parameter(
+      "idle_in_transaction_session_timeout",
+      int.to_string(config.idle_in_transaction_timeout),
+    )
   let connection = pog.named_connection(pool_name)
   let pool_child = pog.supervised(pool_config)
 

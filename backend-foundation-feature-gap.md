@@ -57,16 +57,13 @@ HexDocs оказался недоступен; использованы офиц
 | WS budgets до декодирования и распаковки | **Missing** | Ограничение 64 KiB срабатывает после передачи сообщения приложению; в закреплённых Mist/gramps не найден бюджет накопления incomplete frames/декомпрессии до callback. До untrusted WS нужны ограничения на соответствующем слое и явная compression policy; обычный HTTP reverse proxy после Upgrade не следует автоматически считать защитой декодера. |
 | Reclaim idle/stale WS | **Missing** | WS state/selector не содержит idle expiry или heartbeat с deadline, а автоматический Pong не обнаруживает молчащего peer (`websocket/handlers/socket.gleam`, `connection/context.gleam`). До публичного использования добавить одну осмысленную liveness policy, чтобы ограниченные connection slots не удерживались бесконечно. |
 | Production edge и original-client identity | **Missing** | HAProxy/TLS edge явно отложен в README; существующий frontend Nginx не задаёт полноценный WSS ingress-контракт, а backend rate limit использует непосредственный peer. До публичного deployment завершить TLS/WSS, нормализацию forwarded headers и владельца per-client limiting — доверенный resolver в backend либо лимитер на edge, не слепое доверие `X-Forwarded-For`. |
-| Production migration execution | **Missing** | Runner есть, но production image не включает `backend/migrations`, а документирована только dev-команда (`Dockerfile`, `backend/docs/sql-migrations.md`). До первого production изменения схемы нужен воспроизводимый release-step с SQL-артефактами и одним исполнителем; не требуется переносить migrations в HTTP startup. |
 | Управляемый drain при остановке | **Missing** | Нет прикладного перехода readiness → not-ready, прекращения admission и ограниченного ожидания активных HTTP/WS перед остановкой зависимостей. Это эксплуатационный gap перед rolling deployments, не блокер написания фич; имеющиеся OTP-тесты с fake children не проверяют такой контракт. |
-| Потребление собранных metrics | **Missing** | `observability/metrics.gleam` имеет in-process snapshot, но production exporter/consumer не подключён. До эксплуатации, опирающейся на эти метрики, достаточно одного поддержанного выхода — scrape, push или периодического structured reporting; конкретный observability stack необязателен. |
 
 ## Можно отложить без переделки foundation
 
 | Пункт | Статус | Причина |
 |---|---|---|
 
-| DB statement/transaction budgets | **Consider later** | `pog.timeout` — не PostgreSQL `statement_timeout` и не строгий end-to-end deadline; внутри `pog.transaction` индивидуальные query timeouts не применяются. С первыми долгими/конкурентными транзакциями задать statement/lock/transaction policy, не считая текущий конфигурационный timeout универсальной отменой SQL. |
 | Обязательный изолированный integration-test job | **Consider later** | Базовый harness есть, но DB migration test допускает пропуск при недоступной DB и использует dev DB. До CI/release gate добавить отдельную test DB и режим, где отсутствие DB означает failure, плюс lifecycle/security regression tests для новых механизмов. |
 
 ## Границы проверки

@@ -22,6 +22,10 @@ fn run_with_database() -> Nil {
       url: "postgres://roxy:roxy@postgres:5432/roxy",
       pool_size: 1,
       query_timeout: 1000,
+      statement_timeout: 800,
+      lock_timeout: 100,
+      transaction_timeout: 2000,
+      idle_in_transaction_timeout: 500,
     )
   case pool.build(config) {
     Error(_) -> Nil

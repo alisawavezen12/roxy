@@ -102,8 +102,7 @@ fn authorize(
   dependencies: dependencies.Dependencies,
   context: transport_context.TransportContext,
 ) -> Result(wisp.Response, errors.HttpError) {
-  let principal =
-    session.principal(request, dependencies.config.secret_key_base, context)
+  let principal = session.principal(request, dependencies, context)
   case access.authorize(route.access, principal) {
     Ok(_) -> check_body(route, request, dependencies, context)
     Error(access.Unauthenticated) ->

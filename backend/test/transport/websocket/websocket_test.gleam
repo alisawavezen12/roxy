@@ -2,6 +2,7 @@ import application/dependencies
 import config/app
 import config/environment
 import config/origins
+import config/session
 import config/transport
 import db/config as postgres_config_module
 import gleam/erlang/process
@@ -153,6 +154,7 @@ fn test_dependencies(port: Int) -> dependencies.Dependencies {
       environment: environment.Development,
       secret_key_base: "test-secret-key-base-that-is-long-enough-for-wisp",
       origins: origins.OriginsConfig(allowed: [origin]),
+      session: session.SessionConfig(ttl_seconds: 86_400, cookie_secure: False),
       transport: transport.TransportConfig(
         public_base_url: "http://localhost:8080",
         trusted_proxy_ips: [],

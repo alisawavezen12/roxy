@@ -23,6 +23,16 @@ pub fn new(
   Dependencies(config:, postgres:, rate_limiter:, metrics: metrics_value)
 }
 
+pub fn config(dependencies: Dependencies) -> app.AppConfig {
+  let Dependencies(config:, ..) = dependencies
+  config
+}
+
+pub fn postgres(dependencies: Dependencies) -> pog.Connection {
+  let Dependencies(postgres:, ..) = dependencies
+  postgres
+}
+
 pub fn execute_query(
   dependencies: Dependencies,
   sql: String,

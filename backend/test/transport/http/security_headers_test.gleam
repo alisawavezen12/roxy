@@ -2,6 +2,7 @@ import application/dependencies
 import config/app
 import config/environment
 import config/origins
+import config/session
 import config/transport
 import db/config as db_config
 import gleam/erlang/process
@@ -61,6 +62,7 @@ fn dependencies(https: Bool) -> dependencies.Dependencies {
       },
       secret_key_base: "test-secret-key-base-that-is-long-enough-for-wisp",
       origins: origins.OriginsConfig(allowed: ["http://localhost:1234"]),
+      session: session.SessionConfig(ttl_seconds: 86_400, cookie_secure: !https),
       transport: transport.TransportConfig(
         public_base_url: base_url,
         trusted_proxy_ips: [],

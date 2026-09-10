@@ -25,6 +25,10 @@ pub fn development_uses_defaults_test() {
 
   config.origins.allowed
   |> should.equal(["http://localhost:1234"])
+  config.session.ttl_seconds
+  |> should.equal(86_400)
+  config.session.cookie_secure
+  |> should.equal(False)
 }
 
 pub fn production_reads_environment_test() {
@@ -58,6 +62,8 @@ pub fn production_reads_environment_test() {
     "https://app.example.com",
     "https://admin.example.com:8443",
   ])
+  config.session.cookie_secure
+  |> should.equal(True)
 }
 
 pub fn production_requires_cors_origins_test() {
@@ -79,6 +85,15 @@ pub fn production_requires_cors_origins_test() {
   |> should.equal(Error(
     "CORS_ALLOWED_ORIGINS environment variable is required in production",
   ))
+}
+
+pub fn invalid_session_ttl_fails_fast_test() {
+  configure_production()
+  envoy.set("CORS_ALLOWED_ORIGINS", "https://app.example.com")
+  envoy.set("SESSION_TTL_SECONDS", "30")
+
+  app.load()
+  |> should.equal(Error("SESSION_TTL_SECONDS must be between 60 and 2592000"))
 }
 
 pub fn production_rejects_empty_origin_list_entry_test() {

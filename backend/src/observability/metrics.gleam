@@ -18,6 +18,7 @@ pub type Metric {
   WebsocketMessageTooLarge
   SessionMissing
   SessionInvalid
+  SessionStoreFailed
   DbProbeFailed
   SupervisorRestarted
 }
@@ -39,6 +40,7 @@ pub type Snapshot {
     websocket_message_too_large: Int,
     session_missing: Int,
     session_invalid: Int,
+    session_store_failed: Int,
     db_probe_failed: Int,
     supervisor_restarts: Int,
   )
@@ -88,7 +90,7 @@ fn handle_message(
 }
 
 fn initial_snapshot() -> Snapshot {
-  Snapshot(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+  Snapshot(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 }
 
 fn record_metric(state: Snapshot, metric: Metric) -> Snapshot {
@@ -130,6 +132,8 @@ fn record_metric(state: Snapshot, metric: Metric) -> Snapshot {
       Snapshot(..state, session_missing: state.session_missing + 1)
     SessionInvalid ->
       Snapshot(..state, session_invalid: state.session_invalid + 1)
+    SessionStoreFailed ->
+      Snapshot(..state, session_store_failed: state.session_store_failed + 1)
     DbProbeFailed ->
       Snapshot(..state, db_probe_failed: state.db_probe_failed + 1)
     SupervisorRestarted ->

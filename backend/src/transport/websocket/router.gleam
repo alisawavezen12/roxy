@@ -74,11 +74,7 @@ fn handle(
     Error(error) -> error_response.response(error, context)
     Ok(Nil) -> {
       let principal =
-        session.principal(
-          http_request,
-          dependencies.config.secret_key_base,
-          context,
-        )
+        session.principal(http_request, dependencies, context)
       case access.authorize(route.access, principal) {
         Error(access.Unauthenticated) ->
           error_response.response(

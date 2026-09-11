@@ -19,16 +19,27 @@ pub fn create(
   ttl_seconds: Int,
   timeout: Int,
 ) -> Result(String, pog.QueryError) {
+  create_with_permissions(connection, user_id, [], ttl_seconds, timeout)
+}
+
+pub fn create_with_permissions(
+  connection: pog.Connection,
+  user_id: String,
+  permissions: List(String),
+  ttl_seconds: Int,
+  timeout: Int,
+) -> Result(String, pog.QueryError) {
   let token =
     crypto.strong_random_bytes(32)
     |> bit_array.base64_url_encode(False)
   let expires_at = now_seconds() + ttl_seconds
   let query =
     pog.query(
-      "insert into sessions (token_hash, user_id, expires_at, revoked) values ($1, $2, to_timestamp($3::double precision), false)",
+      "insert into sessions (token_hash, user_id, permissions, expires_at, revoked) values ($1, $2, $3, to_timestamp($4::double precision), false)",
     )
     |> pog.parameter(pog.bytea(token_hash(token)))
     |> pog.parameter(pog.text(user_id))
+    |> pog.parameter(pog.array(pog.text, permissions))
     |> pog.parameter(pog.int(expires_at))
     |> pog.timeout(timeout)
   case pog.execute(query, connection) {
@@ -44,7 +55,7 @@ pub fn verify(
 ) -> Result(access.Principal, VerificationError) {
   let query =
     pog.query(
-      "select user_id, extract(epoch from expires_at)::bigint, revoked from sessions where token_hash = $1",
+      "select user_id, permissions, extract(epoch from expires_at)::bigint, revoked from sessions where token_hash = $1",
     )
     |> pog.parameter(pog.bytea(token_hash(token)))
     |> pog.returning(session_decoder())
@@ -54,12 +65,13 @@ pub fn verify(
     Ok(result) ->
       case result.rows {
         [] -> Error(InvalidToken)
-        [#(user_id, expires_at, revoked), ..] -> {
+        [#(user_id, permissions, expires_at, revoked), ..] -> {
           let expired = expires_at <= now_seconds()
           case revoked, expired {
             True, _ -> Error(Revoked)
             False, True -> Error(Expired)
-            False, False -> Ok(access.principal(user_id))
+            False, False ->
+              Ok(access.principal_with_permissions(user_id, permissions))
           }
         }
       }
@@ -91,11 +103,13 @@ pub fn now_seconds() -> Int {
   seconds
 }
 
-fn session_decoder() -> decode.Decoder(#(String, Int, Bool)) {
+fn session_decoder() -> decode.Decoder(#(String, List(String), Int, Bool)) {
   decode.subfield([0], decode.string, fn(user_id) {
-    decode.subfield([1], decode.int, fn(expires_at) {
-      decode.subfield([2], decode.bool, fn(revoked) {
-        decode.success(#(user_id, expires_at, revoked))
+    decode.subfield([1], decode.list(decode.string), fn(permissions) {
+      decode.subfield([2], decode.int, fn(expires_at) {
+        decode.subfield([3], decode.bool, fn(revoked) {
+          decode.success(#(user_id, permissions, expires_at, revoked))
+        })
       })
     })
   })

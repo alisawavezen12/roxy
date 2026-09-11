@@ -20,7 +20,7 @@ pub fn principal_without_permission_is_forbidden_test() {
 }
 
 pub fn principal_with_permission_is_authorized_test() {
-  let principal = access.Principal("user-1", ["admin"])
+  let principal = access.principal_with_permissions("user-1", ["admin"])
 
   access.authorize(access.Permission("admin"), option.Some(principal))
   |> should.equal(Ok(option.Some(principal)))

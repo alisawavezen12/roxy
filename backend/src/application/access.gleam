@@ -29,7 +29,14 @@ pub fn authorize(
 }
 
 pub fn principal(user_id: String) -> Principal {
-  Principal(user_id:, permissions: [])
+  principal_with_permissions(user_id, [])
+}
+
+pub fn principal_with_permissions(
+  user_id: String,
+  permissions: List(String),
+) -> Principal {
+  Principal(user_id:, permissions:)
 }
 
 pub fn user_id(principal: Option(Principal)) -> Option(String) {

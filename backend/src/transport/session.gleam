@@ -23,10 +23,21 @@ pub fn issue(
   dependencies: app_dependencies.Dependencies,
   user_id: String,
 ) -> Result(wisp.Response, pog.QueryError) {
+  issue_with_permissions(response, http_request, dependencies, user_id, [])
+}
+
+pub fn issue_with_permissions(
+  response: wisp.Response,
+  http_request: request.Request(body),
+  dependencies: app_dependencies.Dependencies,
+  user_id: String,
+  permissions: List(String),
+) -> Result(wisp.Response, pog.QueryError) {
   let config = app_dependencies.config(dependencies)
-  use token <- result.try(session_service.create(
+  use token <- result.try(session_service.create_with_permissions(
     app_dependencies.postgres(dependencies),
     user_id,
+    permissions,
     config.session.ttl_seconds,
     config.postgres.query_timeout,
   ))

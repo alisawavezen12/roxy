@@ -116,7 +116,13 @@ fn authorize(
 ) -> Result(wisp.Response, errors.HttpError) {
   let principal = session.principal(request, dependencies, context)
   case access.authorize(route.access, principal) {
-    Ok(_) -> check_body(route, request, dependencies, context)
+    Ok(principal) ->
+      check_body(
+        route,
+        request,
+        dependencies,
+        transport_context.with_principal(context, principal),
+      )
     Error(access.Unauthenticated) ->
       Error(errors.Access(access.Unauthenticated))
     Error(access.Forbidden) -> Error(errors.Access(access.Forbidden))

@@ -1,3 +1,4 @@
+import application/messages
 import config/defaults
 import config/environment
 import envoy
@@ -65,9 +66,7 @@ fn load_public_base_url(
       case environment {
         environment.Development -> Ok(defaults.public_base_url)
         environment.Production ->
-          Error(
-            "PUBLIC_BASE_URL environment variable is required in production",
-          )
+          Error(messages.required_in_production("PUBLIC_BASE_URL"))
       }
   }
   use value <- result.try(value)
@@ -87,9 +86,7 @@ fn load_trusted_proxy_ips(
       case environment {
         environment.Development -> Ok([])
         environment.Production ->
-          Error(
-            "TRUSTED_PROXY_IPS environment variable is required in production",
-          )
+          Error(messages.required_in_production("TRUSTED_PROXY_IPS"))
       }
   }
 }
@@ -100,7 +97,7 @@ fn missing_base_url(
   case environment {
     environment.Development -> Ok(defaults.public_base_url)
     environment.Production ->
-      Error("PUBLIC_BASE_URL environment variable is required in production")
+      Error(messages.required_in_production("PUBLIC_BASE_URL"))
   }
 }
 
@@ -110,7 +107,7 @@ fn missing_proxy_ips(
   case environment {
     environment.Development -> Ok([])
     environment.Production ->
-      Error("TRUSTED_PROXY_IPS environment variable is required in production")
+      Error(messages.required_in_production("TRUSTED_PROXY_IPS"))
   }
 }
 
@@ -133,16 +130,14 @@ fn missing_internal_ips(
   case environment {
     environment.Development -> Ok([])
     environment.Production ->
-      Error(
-        "TRUSTED_INTERNAL_IPS environment variable is required in production",
-      )
+      Error(messages.required_in_production("TRUSTED_INTERNAL_IPS"))
   }
 }
 
 fn parse_proxy_ips(value: String) -> Result(List(String), String) {
   let ips = value |> string.split(",") |> list.map(string.trim)
   case list.any(ips, fn(ip) { ip == "" }) {
-    True -> Error("TRUSTED_PROXY_IPS must not contain empty entries")
+    True -> Error(messages.trusted_proxy_ips_empty)
     False -> Ok(ips)
   }
 }
@@ -161,10 +156,10 @@ fn validate_public_base_url(
         environment.Development, "https" -> Ok(value)
         environment.Production, "https" -> Ok(value)
         environment.Production, _ ->
-          Error("PUBLIC_BASE_URL must use https:// outside development")
-        _, _ -> Error("PUBLIC_BASE_URL must use http:// or https://")
+          Error(messages.public_base_url_https_required)
+        _, _ -> Error(messages.public_base_url_scheme_invalid)
       }
     }
-    _ -> Error("PUBLIC_BASE_URL must be an absolute http(s) URL")
+    _ -> Error(messages.public_base_url_invalid)
   }
 }

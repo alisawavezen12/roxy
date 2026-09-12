@@ -14,6 +14,7 @@ import transport/dispatcher
 import transport/http/router as http_router
 
 const restart_intensity = 3
+
 const restart_period_seconds = 10
 
 pub fn start() -> Nil {

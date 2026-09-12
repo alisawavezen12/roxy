@@ -1,3 +1,4 @@
+import application/messages
 import config/defaults
 import config/environment
 import envoy
@@ -33,10 +34,7 @@ fn load_value(environment: environment.Environment) -> Result(String, String) {
 fn missing(environment: environment.Environment) -> Result(String, String) {
   case environment {
     environment.Development -> Ok(defaults.cors_allowed_origins)
-    environment.Production ->
-      Error(
-        "CORS_ALLOWED_ORIGINS environment variable is required in production",
-      )
+    environment.Production -> Error(messages.cors_origins_required)
   }
 }
 
@@ -48,12 +46,7 @@ fn parse_origins(value: String) -> Result(List(String), String) {
 
 fn parse_origin(value: String) -> Result(String, String) {
   let origin = string.trim(value)
-  let invalid = fn() {
-    Error(
-      "CORS_ALLOWED_ORIGINS must contain only HTTP origins in the form scheme://host[:port]; invalid value: "
-      <> origin,
-    )
-  }
+  let invalid = fn() { Error(messages.invalid_cors_origin(origin)) }
 
   case uri.parse(origin) {
     Ok(parsed) -> {

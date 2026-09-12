@@ -4,6 +4,7 @@ import gleam/http/request
 import gleam/string
 import gleeunit/should
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/http/request_body
 import transport/transport_context
 import wisp
@@ -15,7 +16,7 @@ pub fn malformed_json_maps_to_400_test() {
   |> should.equal(status.bad_request)
 
   body(response)
-  |> string.contains("invalid_body")
+  |> string.contains(messages.invalid_body_code)
   |> should.equal(True)
 }
 
@@ -26,7 +27,7 @@ pub fn unsupported_json_content_type_maps_to_415_test() {
   |> should.equal(status.unsupported_media_type)
 
   body(response)
-  |> string.contains("unsupported_media_type")
+  |> string.contains(messages.unsupported_media_type_code)
   |> should.equal(True)
 }
 

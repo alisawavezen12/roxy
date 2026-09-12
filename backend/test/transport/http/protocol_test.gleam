@@ -7,6 +7,7 @@ import transport/http/middleware/logging as request_logging
 import transport/http/protocol/api_errors
 import transport/http/protocol/limits
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/http/request_id
 import transport/transport_context
 import wisp
@@ -38,8 +39,8 @@ pub fn api_errors_are_json_and_keep_request_id_test() {
   let response =
     api_errors.response(
       status.unsupported_media_type,
-      "unsupported_media_type",
-      "Unsupported media type",
+      messages.unsupported_media_type_code,
+      messages.unsupported_media_type_message,
       context,
     )
 
@@ -55,7 +56,7 @@ pub fn api_errors_are_json_and_keep_request_id_test() {
   case response.body {
     wisp.Text(body) -> {
       body
-      |> string.contains("unsupported_media_type")
+      |> string.contains(messages.unsupported_media_type_code)
       |> should.equal(True)
 
       body

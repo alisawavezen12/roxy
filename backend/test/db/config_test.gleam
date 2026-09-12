@@ -1,5 +1,7 @@
+import application/messages
 import config/environment
 import db/config
+import db/defaults as db_defaults
 import envoy
 import gleeunit/should
 
@@ -12,21 +14,21 @@ pub fn development_uses_defaults_test() {
   let assert Ok(postgres_config) = config.load(environment.Development)
 
   postgres_config.url
-  |> should.equal("postgres://roxy:roxy@postgres:5432/roxy")
+  |> should.equal(db_defaults.url)
 
   postgres_config.pool_size
-  |> should.equal(10)
+  |> should.equal(db_defaults.pool_size)
 
   postgres_config.query_timeout
-  |> should.equal(5000)
+  |> should.equal(db_defaults.query_timeout)
   postgres_config.statement_timeout
-  |> should.equal(4000)
+  |> should.equal(db_defaults.statement_timeout)
   postgres_config.lock_timeout
-  |> should.equal(1000)
+  |> should.equal(db_defaults.lock_timeout)
   postgres_config.transaction_timeout
-  |> should.equal(15000)
+  |> should.equal(db_defaults.transaction_timeout)
   postgres_config.idle_in_transaction_timeout
-  |> should.equal(5000)
+  |> should.equal(db_defaults.idle_in_transaction_timeout)
 }
 
 pub fn production_rejects_inconsistent_timeout_budgets_test() {
@@ -40,9 +42,7 @@ pub fn production_rejects_inconsistent_timeout_budgets_test() {
   envoy.set("DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS", "5000")
 
   config.load(environment.Production)
-  |> should.equal(Error(
-    "DATABASE_LOCK_TIMEOUT_MS must not exceed DATABASE_STATEMENT_TIMEOUT_MS",
-  ))
+  |> should.equal(Error(messages.database_lock_timeout_exceeded))
 }
 
 pub fn production_reads_environment_test() {
@@ -66,11 +66,11 @@ pub fn production_reads_environment_test() {
   postgres_config.query_timeout
   |> should.equal(7000)
   postgres_config.statement_timeout
-  |> should.equal(4000)
+  |> should.equal(db_defaults.statement_timeout)
   postgres_config.lock_timeout
-  |> should.equal(1000)
+  |> should.equal(db_defaults.lock_timeout)
   postgres_config.transaction_timeout
-  |> should.equal(15000)
+  |> should.equal(db_defaults.transaction_timeout)
   postgres_config.idle_in_transaction_timeout
-  |> should.equal(5000)
+  |> should.equal(db_defaults.idle_in_transaction_timeout)
 }

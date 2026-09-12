@@ -9,6 +9,7 @@ import observability/logger
 import observability/metrics
 import ratelimit/limiter
 import transport/http/protocol/mist_errors
+import transport/protocol/messages
 import transport/transport_context
 import transport/websocket/connection/context as connection_context
 import transport/websocket/protocol/limits
@@ -55,11 +56,11 @@ fn handle_message(
     Error(limiter.RateLimited(_)) -> {
       metrics.record(state.context.metrics, metrics.WebsocketMessageRateLimited)
       log_error(state.context, "message_rate_limited")
-      mist.stop_abnormal("WebSocket message rate limited")
+      mist.stop_abnormal(messages.websocket_message_rate_limited)
     }
     Error(limiter.ConnectionsFull) -> {
       log_error(state.context, "connection_limit_rejected")
-      mist.stop_abnormal("WebSocket connection limit reached")
+      mist.stop_abnormal(messages.websocket_connection_limit_reached)
     }
     Ok(Nil) -> check_message(state, message, connection)
   }
@@ -74,7 +75,7 @@ fn check_message(
     Ok(next) -> next
     Error(_) -> {
       log_error(state.context, "handler_crashed")
-      mist.stop_abnormal("WebSocket handler crashed")
+      mist.stop_abnormal(messages.websocket_handler_crashed)
     }
   }
 }
@@ -125,12 +126,12 @@ fn handle_binary(
 fn message_too_large(state: State) -> mist.Next(State, Nil) {
   metrics.record(state.context.metrics, metrics.WebsocketMessageTooLarge)
   log_error(state.context, "message_too_large")
-  mist.stop_abnormal("message too large")
+  mist.stop_abnormal(messages.websocket_message_too_large)
 }
 
 fn send_failed(state: State) -> mist.Next(State, Nil) {
   log_error(state.context, "send_failed")
-  mist.stop_abnormal("failed to send WebSocket message")
+  mist.stop_abnormal(messages.websocket_send_failed)
 }
 
 fn log_connected(context: connection_context.ConnectionContext) -> Nil {

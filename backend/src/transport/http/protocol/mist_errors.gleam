@@ -2,6 +2,7 @@ import gleam/bytes_tree
 import gleam/http/response
 import mist
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/transport_context
 
 pub fn too_many_requests(
@@ -9,7 +10,11 @@ pub fn too_many_requests(
 ) -> response.Response(mist.ResponseData) {
   let request_id = transport_context.request_id(context)
   let body =
-    "{\"error\":{\"code\":\"rate_limited\",\"message\":\"Too many requests\",\"request_id\":\""
+    "{\"error\":{\"code\":\""
+    <> messages.rate_limited_code
+    <> "\",\"message\":\""
+    <> messages.rate_limited_message
+    <> "\",\"request_id\":\""
     <> request_id
     <> "\"}}"
   response.new(status.too_many_requests)
@@ -21,11 +26,13 @@ pub fn too_many_requests(
 pub fn service_unavailable() -> response.Response(mist.ResponseData) {
   response.new(status.service_unavailable)
   |> response.set_body(
-    mist.Bytes(bytes_tree.from_string("Service Unavailable")),
+    mist.Bytes(bytes_tree.from_string(messages.service_unavailable)),
   )
 }
 
 pub fn insecure_transport() -> response.Response(mist.ResponseData) {
   response.new(status.bad_request)
-  |> response.set_body(mist.Bytes(bytes_tree.from_string("Insecure transport")))
+  |> response.set_body(
+    mist.Bytes(bytes_tree.from_string(messages.insecure_transport)),
+  )
 }

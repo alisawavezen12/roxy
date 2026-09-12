@@ -1,6 +1,7 @@
 import gleam/json
 import gleam/option
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/transport_context
 import wisp
 
@@ -49,8 +50,8 @@ pub fn payload_too_large(
 ) -> wisp.Response {
   response(
     status.payload_too_large,
-    "payload_too_large",
-    "Request body is too large",
+    messages.payload_too_large_code,
+    messages.payload_too_large_message,
     context,
   )
 }

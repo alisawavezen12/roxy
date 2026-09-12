@@ -1,5 +1,8 @@
+import application/messages
 import config/app
+import config/defaults
 import config/environment
+import config/session
 import envoy
 import gleeunit/should
 
@@ -16,17 +19,17 @@ pub fn development_uses_defaults_test() {
   |> should.equal(environment.Development)
 
   config.port
-  |> should.equal(8080)
+  |> should.equal(defaults.port)
 
   config.secret_key_base
   |> should.equal(
-    "development-secret-key-base-that-is-long-enough-for-wisp-xxxxxxxxxxxx",
+    defaults.secret_key_base,
   )
 
   config.origins.allowed
-  |> should.equal(["http://localhost:1234"])
+  |> should.equal([defaults.cors_allowed_origins])
   config.session.ttl_seconds
-  |> should.equal(86_400)
+  |> should.equal(session.default_ttl_seconds)
   config.session.cookie_secure
   |> should.equal(False)
 }
@@ -91,7 +94,7 @@ pub fn production_requires_cors_origins_test() {
 
   app.load()
   |> should.equal(Error(
-    "CORS_ALLOWED_ORIGINS environment variable is required in production",
+    messages.cors_origins_required,
   ))
 }
 
@@ -101,7 +104,7 @@ pub fn invalid_session_ttl_fails_fast_test() {
   envoy.set("SESSION_TTL_SECONDS", "30")
 
   app.load()
-  |> should.equal(Error("SESSION_TTL_SECONDS must be between 60 and 2592000"))
+  |> should.equal(Error(messages.session_ttl_invalid))
 }
 
 pub fn production_rejects_empty_origin_list_entry_test() {
@@ -110,7 +113,7 @@ pub fn production_rejects_empty_origin_list_entry_test() {
 
   app.load()
   |> should.equal(Error(
-    "CORS_ALLOWED_ORIGINS must contain only HTTP origins in the form scheme://host[:port]; invalid value: ",
+    messages.invalid_cors_origin(""),
   ))
 }
 
@@ -120,7 +123,7 @@ pub fn production_rejects_non_origin_cors_value_test() {
 
   app.load()
   |> should.equal(Error(
-    "CORS_ALLOWED_ORIGINS must contain only HTTP origins in the form scheme://host[:port]; invalid value: https://app.example.com/path",
+    messages.invalid_cors_origin("https://app.example.com/path"),
   ))
 }
 
@@ -130,7 +133,7 @@ pub fn production_rejects_empty_port_test() {
 
   app.load()
   |> should.equal(Error(
-    "CORS_ALLOWED_ORIGINS must contain only HTTP origins in the form scheme://host[:port]; invalid value: https://app.example.com:",
+    messages.invalid_cors_origin("https://app.example.com:"),
   ))
 }
 

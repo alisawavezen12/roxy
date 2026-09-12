@@ -26,6 +26,7 @@ import ratelimit/limiter
 
 import transport/dispatcher
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/http/router as http_router
 import transport/websocket/client
 import wisp/wisp_mist
@@ -96,7 +97,7 @@ pub fn invalid_websocket_method_returns_405_test() {
   |> should.equal(status.method_not_allowed)
 
   response.body
-  |> string.contains("method_not_allowed")
+  |> string.contains(messages.method_not_allowed_code)
   |> should.equal(True)
 
   list.key_find(response.headers, "allow")
@@ -114,7 +115,7 @@ pub fn malformed_websocket_handshake_returns_400_test() {
   |> should.equal(status.bad_request)
 
   response.body
-  |> string.contains("invalid_input")
+  |> string.contains(messages.invalid_handshake_code)
   |> should.equal(True)
 
   process.send_exit(server.pid)

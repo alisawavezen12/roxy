@@ -7,6 +7,7 @@ import gleam/option
 import gleam/string
 import mist
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/transport_context
 import transport/websocket/handshake/validation
 
@@ -17,20 +18,20 @@ pub fn response(
   let #(status, code, message, allow) = case error {
     validation.MethodNotAllowed(methods) -> #(
       status.method_not_allowed,
-      "method_not_allowed",
-      "Method not allowed",
+      messages.method_not_allowed_code,
+      messages.method_not_allowed_message,
       option.Some(methods_header(methods)),
     )
     validation.OriginNotAllowed -> #(
       status.forbidden,
-      "forbidden",
-      "Forbidden",
+      messages.forbidden_code,
+      messages.forbidden_message,
       option.None,
     )
     validation.InvalidHandshake -> #(
       status.bad_request,
-      "invalid_input",
-      "Invalid WebSocket handshake",
+      messages.invalid_handshake_code,
+      messages.invalid_handshake_message,
       option.None,
     )
     validation.Access(error) -> {
@@ -67,9 +68,13 @@ fn access_error_details(error: access.AccessError) -> #(Int, String, String) {
   case error {
     access.Unauthenticated -> #(
       status.unauthorized,
-      "unauthorized",
-      "Unauthorized",
+      messages.unauthorized_code,
+      messages.unauthorized_message,
     )
-    access.Forbidden -> #(status.forbidden, "forbidden", "Forbidden")
+    access.Forbidden -> #(
+      status.forbidden,
+      messages.forbidden_code,
+      messages.forbidden_message,
+    )
   }
 }

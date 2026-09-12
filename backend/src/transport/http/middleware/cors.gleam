@@ -7,6 +7,7 @@ import gleam/string
 import transport/http/protocol/api_errors
 import transport/http/protocol/cors as cors_policy
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/transport_context
 import wisp
 
@@ -77,8 +78,8 @@ fn preflight_response(
     False ->
       api_errors.response(
         status.forbidden,
-        "cors_forbidden",
-        "CORS request is not allowed",
+        messages.cors_forbidden_code,
+        messages.cors_forbidden_message,
         context,
       )
   }

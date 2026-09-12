@@ -1,3 +1,4 @@
+import application/messages
 import config/defaults
 import config/environment
 import config/origins
@@ -45,7 +46,7 @@ pub fn load() -> Result(AppConfig, String) {
         transport: transport_config,
         postgres: postgres_config,
       ))
-    False -> Error("SECRET_KEY_BASE must be at least 64 characters long")
+    False -> Error(messages.secret_key_base_too_short)
   }
 }
 
@@ -66,13 +67,13 @@ fn load_secret(environment: environment.Environment) -> Result(String, String) {
 fn required(name: String) -> Result(String, String) {
   case envoy.get(name) {
     Ok(value) if value != "" -> Ok(value)
-    _ -> Error(name <> " environment variable is required in production")
+    _ -> Error(messages.required_in_production(name))
   }
 }
 
 fn parse_port(value: String) -> Result(Int, String) {
   case int.parse(value) {
     Ok(port) if port > 0 && port < 65_536 -> Ok(port)
-    _ -> Error("PORT must be an integer between 1 and 65535")
+    _ -> Error(messages.port_invalid)
   }
 }

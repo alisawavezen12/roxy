@@ -1,3 +1,4 @@
+import application/messages
 import envoy
 
 pub type Environment {
@@ -7,10 +8,9 @@ pub type Environment {
 
 pub fn load() -> Result(Environment, String) {
   case envoy.get("APP_ENV") {
-    Error(_) | Ok("") -> Error("APP_ENV environment variable is required")
+    Error(_) | Ok("") -> Error(messages.app_env_required)
     Ok("development") -> Ok(Development)
     Ok("production") -> Ok(Production)
-    Ok(value) ->
-      Error("APP_ENV must be either development or production, got: " <> value)
+    Ok(value) -> Error(messages.invalid_app_environment(value))
   }
 }

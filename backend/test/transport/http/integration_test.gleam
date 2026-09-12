@@ -12,6 +12,7 @@ import gleeunit/should
 import mist
 import transport/http/protocol/api_errors
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/transport_context
 import wisp
 import wisp/wisp_mist
@@ -24,8 +25,8 @@ pub fn crash_does_not_stop_http_server_test() {
         "/test/crash" ->
           api_errors.response(
             status.internal_server_error,
-            "internal",
-            "Internal server error",
+            messages.internal_error_code,
+            messages.internal_error_message,
             transport_context.new(),
           )
         "/health" -> wisp.ok()

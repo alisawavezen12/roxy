@@ -1,3 +1,4 @@
+import application/messages
 import db/config as db_config
 import gleam/erlang/process
 import gleam/int
@@ -10,7 +11,7 @@ pub fn build(
   let pool_name = process.new_name("roxy_postgres")
   use pool_config <- result.try(
     pog.url_config(pool_name, config.url)
-    |> result.replace_error("Invalid DATABASE_URL"),
+    |> result.replace_error(messages.invalid_database_url),
   )
 
   let pool_config =
@@ -59,6 +60,6 @@ pub fn wait_until_ready(
       process.sleep(100)
       wait_until_ready(connection, timeout, attempts - 1)
     }
-    Error(_) -> Error("PostgreSQL connection failed")
+    Error(_) -> Error(messages.postgres_connection_failed)
   }
 }

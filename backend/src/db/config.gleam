@@ -1,3 +1,4 @@
+import application/messages
 import config/environment.{type Environment, Development, Production}
 import db/defaults
 import envoy
@@ -37,7 +38,9 @@ pub fn load(environment: Environment) -> Result(PostgresConfig, String) {
       use statement_timeout <- result.try(required_setting(
         "DATABASE_STATEMENT_TIMEOUT_MS",
       ))
-      use lock_timeout <- result.try(required_setting("DATABASE_LOCK_TIMEOUT_MS"))
+      use lock_timeout <- result.try(required_setting(
+        "DATABASE_LOCK_TIMEOUT_MS",
+      ))
       use transaction_timeout <- result.try(required_setting(
         "DATABASE_TRANSACTION_TIMEOUT_MS",
       ))
@@ -66,7 +69,7 @@ pub fn load(environment: Environment) -> Result(PostgresConfig, String) {
 fn required(name: String) -> Result(String, String) {
   case envoy.get(name) {
     Ok(value) if value != "" -> Ok(value)
-    _ -> Error(name <> " environment variable is required in production")
+    _ -> Error(messages.required_in_production(name))
   }
 }
 
@@ -78,7 +81,7 @@ fn required_setting(name: String) -> Result(Int, String) {
 fn parse_positive(name: String, value: String) -> Result(Int, String) {
   case int.parse(value) {
     Ok(number) if number > 0 -> Ok(number)
-    _ -> Error(name <> " must be a positive integer")
+    _ -> Error(messages.positive_integer_required(name))
   }
 }
 
@@ -89,13 +92,15 @@ fn validate_budgets(
   idle_in_transaction_timeout: Int,
 ) -> Result(Nil, String) {
   case lock_timeout <= statement_timeout {
-    False -> Error("DATABASE_LOCK_TIMEOUT_MS must not exceed DATABASE_STATEMENT_TIMEOUT_MS")
-    True -> case statement_timeout <= transaction_timeout {
-      False -> Error("DATABASE_STATEMENT_TIMEOUT_MS must not exceed DATABASE_TRANSACTION_TIMEOUT_MS")
-      True -> case idle_in_transaction_timeout <= transaction_timeout {
-        False -> Error("DATABASE_IDLE_IN_TRANSACTION_TIMEOUT_MS must not exceed DATABASE_TRANSACTION_TIMEOUT_MS")
-        True -> Ok(Nil)
+    False -> Error(messages.database_lock_timeout_exceeded)
+    True ->
+      case statement_timeout <= transaction_timeout {
+        False -> Error(messages.database_statement_timeout_exceeded)
+        True ->
+          case idle_in_transaction_timeout <= transaction_timeout {
+            False -> Error(messages.database_idle_timeout_exceeded)
+            True -> Ok(Nil)
+          }
       }
-    }
   }
 }

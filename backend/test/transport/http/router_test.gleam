@@ -1,9 +1,11 @@
 import application/dependencies
 import config/app
+import config/defaults as config_defaults
 import config/environment
 import config/origins
 import config/session
 import config/transport
+import db/defaults as db_defaults
 import db/config as postgres_config_module
 import gleam/erlang/process
 import gleam/http
@@ -18,6 +20,7 @@ import pog
 import ratelimit/limiter
 
 import transport/http/protocol/status
+import transport/protocol/messages
 import transport/http/router
 import wisp
 
@@ -28,12 +31,15 @@ pub fn main() {
 fn test_dependencies() -> dependencies.Dependencies {
   let config =
     app.AppConfig(
-      host: "0.0.0.0",
-      port: 8080,
+      host: config_defaults.host,
+      port: config_defaults.port,
       environment: environment.Development,
       secret_key_base: "test-secret-key-base-that-is-long-enough-for-wisp",
       origins: origins.OriginsConfig(allowed: ["http://localhost:1234"]),
-      session: session.SessionConfig(ttl_seconds: 86_400, cookie_secure: False),
+      session: session.SessionConfig(
+        ttl_seconds: session.default_ttl_seconds,
+        cookie_secure: False,
+      ),
       transport: transport.TransportConfig(
         public_base_url: "http://localhost:8080",
         trusted_proxy_ips: [],
@@ -71,11 +77,11 @@ fn postgres_config() -> postgres_config_module.PostgresConfig {
   postgres_config_module.PostgresConfig(
     url: "postgres://test",
     pool_size: 1,
-    query_timeout: 1000,
-    statement_timeout: 800,
-    lock_timeout: 100,
-    transaction_timeout: 2000,
-    idle_in_transaction_timeout: 500,
+    query_timeout: db_defaults.query_timeout,
+    statement_timeout: db_defaults.statement_timeout,
+    lock_timeout: db_defaults.lock_timeout,
+    transaction_timeout: db_defaults.transaction_timeout,
+    idle_in_transaction_timeout: db_defaults.idle_in_transaction_timeout,
   )
 }
 
@@ -307,7 +313,7 @@ pub fn cross_site_unsafe_request_is_rejected_before_routing_test() {
   case response.body {
     wisp.Text(body) ->
       body
-      |> string.contains("csrf_forbidden")
+      |> string.contains(messages.csrf_forbidden_code)
       |> should.equal(True)
     _ -> panic as "Expected JSON text response"
   }

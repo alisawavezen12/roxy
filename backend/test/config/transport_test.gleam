@@ -1,3 +1,4 @@
+import application/messages
 import config/environment
 import config/transport
 import envoy
@@ -26,7 +27,7 @@ pub fn production_rejects_http_base_url_test() {
   envoy.set("PUBLIC_BASE_URL", "http://example.com")
 
   transport.load(environment.Production)
-  |> should.equal(Error("PUBLIC_BASE_URL must use https:// outside development"))
+  |> should.equal(Error(messages.public_base_url_https_required))
 }
 
 pub fn production_requires_trusted_proxy_ips_test() {
@@ -35,7 +36,7 @@ pub fn production_requires_trusted_proxy_ips_test() {
 
   transport.load(environment.Production)
   |> should.equal(Error(
-    "TRUSTED_PROXY_IPS environment variable is required in production",
+    messages.required_in_production("TRUSTED_PROXY_IPS"),
   ))
 }
 

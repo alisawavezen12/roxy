@@ -35,9 +35,7 @@ pub fn production_requires_trusted_proxy_ips_test() {
   envoy.unset("TRUSTED_PROXY_IPS")
 
   transport.load(environment.Production)
-  |> should.equal(Error(
-    messages.required_in_production("TRUSTED_PROXY_IPS"),
-  ))
+  |> should.equal(Error(messages.required_in_production("TRUSTED_PROXY_IPS")))
 }
 
 pub fn production_https_is_allowed_only_from_trusted_proxy_test() {

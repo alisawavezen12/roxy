@@ -10,9 +10,9 @@ import gleam/otp/supervision
 
 import gleeunit/should
 import mist
+import shared/api/error as api_error
 import transport/http/protocol/api_errors
 import transport/http/protocol/status
-import transport/protocol/messages
 import transport/transport_context
 import wisp
 import wisp/wisp_mist
@@ -25,8 +25,8 @@ pub fn crash_does_not_stop_http_server_test() {
         "/test/crash" ->
           api_errors.response(
             status.internal_server_error,
-            messages.internal_error_code,
-            messages.internal_error_message,
+            api_error.internal_error_code,
+            api_error.internal_error_message,
             transport_context.new(),
           )
         "/health" -> wisp.ok()

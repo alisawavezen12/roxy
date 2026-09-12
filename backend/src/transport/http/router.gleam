@@ -68,19 +68,19 @@ pub fn handle(
         cache_policy.handle(request, fn() {
           error_handler.handle(request, context, fn() {
             csrf.handle(
-            request,
-            dependencies.config.origins,
-            dependencies.config.transport,
-            context,
-            fn(request) {
-              Ok(
-                wisp.handle_head(request, fn(request) {
-                  case dispatch(request, dependencies, context) {
-                    Ok(response) -> response
-                    Error(error) -> error_handler.response(error, context)
-                  }
-                }),
-              )
+              request,
+              dependencies.config.origins,
+              dependencies.config.transport,
+              context,
+              fn(request) {
+                Ok(
+                  wisp.handle_head(request, fn(request) {
+                    case dispatch(request, dependencies, context) {
+                      Ok(response) -> response
+                      Error(error) -> error_handler.response(error, context)
+                    }
+                  }),
+                )
               },
             )
           })

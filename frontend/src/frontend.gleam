@@ -7,7 +7,7 @@ import lustre/element.{type Element}
 import lustre/element/html
 import lustre/event
 import rsvp
-import shared/health.{type Health}
+import health.{type Health}
 
 pub fn main() -> Nil {
   let app = lustre.application(init, update, view)

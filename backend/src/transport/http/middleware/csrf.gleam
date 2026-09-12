@@ -23,13 +23,14 @@ pub fn handle(
 ) -> Result(wisp.Response, http_errors.HttpError) {
   case safe_method(http_request.method) {
     True -> next(http_request)
-    False -> protect_unsafe_request(
-      http_request,
-      origins_config,
-      transport_config,
-      context,
-      next,
-    )
+    False ->
+      protect_unsafe_request(
+        http_request,
+        origins_config,
+        transport_config,
+        context,
+        next,
+      )
   }
 }
 
@@ -86,12 +87,14 @@ fn normalize_referer(value: String) -> Result(String, Nil) {
 
 fn parse_http_uri(value: String) -> Result(Uri, Nil) {
   case uri.parse(string.trim(value)) {
-    Ok(Uri(
-      scheme: option.Some(scheme),
-      userinfo: option.None,
-      host: option.Some(host),
-      ..,
-    ) as parsed)
+    Ok(
+      Uri(
+        scheme: option.Some(scheme),
+        userinfo: option.None,
+        host: option.Some(host),
+        ..,
+      ) as parsed,
+    )
       if host != ""
     -> {
       case string.lowercase(scheme) {
@@ -115,14 +118,12 @@ fn allowed_origin(
   transport_config: transport.TransportConfig,
 ) -> Bool {
   let public_origin = normalize_referer(transport_config.public_base_url)
-  list.contains(origins_config.allowed, origin)
-  || public_origin == Ok(origin)
+  list.contains(origins_config.allowed, origin) || public_origin == Ok(origin)
 }
 
 fn without_cookies(http_request: wisp.Request) -> wisp.Request {
-  let headers = list.filter(http_request.headers, fn(header) {
-    header.0 != "cookie"
-  })
+  let headers =
+    list.filter(http_request.headers, fn(header) { header.0 != "cookie" })
   request.Request(..http_request, headers:)
 }
 

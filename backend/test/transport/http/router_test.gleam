@@ -5,8 +5,8 @@ import config/environment
 import config/origins
 import config/session
 import config/transport
-import db/defaults as db_defaults
 import db/config as postgres_config_module
+import db/defaults as db_defaults
 import gleam/erlang/process
 import gleam/http
 import gleam/http/request
@@ -19,8 +19,8 @@ import observability/metrics
 import pog
 import ratelimit/limiter
 
+import shared/api/error as api_error
 import transport/http/protocol/status
-import transport/protocol/messages
 import transport/http/router
 import wisp
 
@@ -313,7 +313,7 @@ pub fn cross_site_unsafe_request_is_rejected_before_routing_test() {
   case response.body {
     wisp.Text(body) ->
       body
-      |> string.contains(messages.csrf_forbidden_code)
+      |> string.contains(api_error.csrf_forbidden_code)
       |> should.equal(True)
     _ -> panic as "Expected JSON text response"
   }

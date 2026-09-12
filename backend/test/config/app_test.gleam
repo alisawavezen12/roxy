@@ -22,9 +22,7 @@ pub fn development_uses_defaults_test() {
   |> should.equal(defaults.port)
 
   config.secret_key_base
-  |> should.equal(
-    defaults.secret_key_base,
-  )
+  |> should.equal(defaults.secret_key_base)
 
   config.origins.allowed
   |> should.equal([defaults.cors_allowed_origins])
@@ -93,9 +91,7 @@ pub fn production_requires_cors_origins_test() {
   envoy.unset("CORS_ALLOWED_ORIGINS")
 
   app.load()
-  |> should.equal(Error(
-    messages.cors_origins_required,
-  ))
+  |> should.equal(Error(messages.cors_origins_required))
 }
 
 pub fn invalid_session_ttl_fails_fast_test() {
@@ -112,9 +108,7 @@ pub fn production_rejects_empty_origin_list_entry_test() {
   envoy.set("CORS_ALLOWED_ORIGINS", "https://app.example.com,")
 
   app.load()
-  |> should.equal(Error(
-    messages.invalid_cors_origin(""),
-  ))
+  |> should.equal(Error(messages.invalid_cors_origin("")))
 }
 
 pub fn production_rejects_non_origin_cors_value_test() {
@@ -122,9 +116,9 @@ pub fn production_rejects_non_origin_cors_value_test() {
   envoy.set("CORS_ALLOWED_ORIGINS", "https://app.example.com/path")
 
   app.load()
-  |> should.equal(Error(
-    messages.invalid_cors_origin("https://app.example.com/path"),
-  ))
+  |> should.equal(
+    Error(messages.invalid_cors_origin("https://app.example.com/path")),
+  )
 }
 
 pub fn production_rejects_empty_port_test() {
@@ -132,9 +126,9 @@ pub fn production_rejects_empty_port_test() {
   envoy.set("CORS_ALLOWED_ORIGINS", "https://app.example.com:")
 
   app.load()
-  |> should.equal(Error(
-    messages.invalid_cors_origin("https://app.example.com:"),
-  ))
+  |> should.equal(
+    Error(messages.invalid_cors_origin("https://app.example.com:")),
+  )
 }
 
 fn configure_production() -> Nil {

@@ -6,8 +6,8 @@ import gleam/list
 import gleam/option
 import gleam/string
 import mist
+import shared/api/error as api_error
 import transport/http/protocol/status
-import transport/protocol/messages
 import transport/transport_context
 import transport/websocket/handshake/validation
 
@@ -18,20 +18,20 @@ pub fn response(
   let #(status, code, message, allow) = case error {
     validation.MethodNotAllowed(methods) -> #(
       status.method_not_allowed,
-      messages.method_not_allowed_code,
-      messages.method_not_allowed_message,
+      api_error.method_not_allowed_code,
+      api_error.method_not_allowed_message,
       option.Some(methods_header(methods)),
     )
     validation.OriginNotAllowed -> #(
       status.forbidden,
-      messages.forbidden_code,
-      messages.forbidden_message,
+      api_error.forbidden_code,
+      api_error.forbidden_message,
       option.None,
     )
     validation.InvalidHandshake -> #(
       status.bad_request,
-      messages.invalid_handshake_code,
-      messages.invalid_handshake_message,
+      api_error.invalid_handshake_code,
+      api_error.invalid_handshake_message,
       option.None,
     )
     validation.Access(error) -> {
@@ -68,13 +68,13 @@ fn access_error_details(error: access.AccessError) -> #(Int, String, String) {
   case error {
     access.Unauthenticated -> #(
       status.unauthorized,
-      messages.unauthorized_code,
-      messages.unauthorized_message,
+      api_error.unauthorized_code,
+      api_error.unauthorized_message,
     )
     access.Forbidden -> #(
       status.forbidden,
-      messages.forbidden_code,
-      messages.forbidden_message,
+      api_error.forbidden_code,
+      api_error.forbidden_message,
     )
   }
 }

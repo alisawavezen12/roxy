@@ -10,8 +10,8 @@ import gleam/result
 import gleam/string
 import gleeunit/should
 import mist
+import shared/api/error as api_error
 import transport/http/protocol/status
-import transport/protocol/messages
 import transport/transport_context
 import transport/websocket/handshake/error_response
 import transport/websocket/handshake/validation
@@ -28,7 +28,7 @@ pub fn method_not_allowed_maps_to_handshake_405_test() {
 
   response
   |> body
-  |> string.contains(messages.method_not_allowed_code)
+  |> string.contains(api_error.method_not_allowed_code)
   |> should.equal(True)
 }
 
@@ -44,7 +44,7 @@ pub fn origin_not_allowed_maps_to_handshake_403_test() {
 
   response
   |> body
-  |> string.contains(messages.forbidden_code)
+  |> string.contains(api_error.forbidden_code)
   |> should.equal(True)
 }
 
@@ -60,7 +60,7 @@ pub fn invalid_handshake_maps_to_handshake_400_test() {
 
   response
   |> body
-  |> string.contains(messages.invalid_handshake_code)
+  |> string.contains(api_error.invalid_handshake_code)
   |> should.equal(True)
 }
 
@@ -76,7 +76,7 @@ pub fn unauthenticated_access_maps_to_handshake_401_test() {
 
   response
   |> body
-  |> string.contains(messages.unauthorized_code)
+  |> string.contains(api_error.unauthorized_code)
   |> should.equal(True)
 }
 
@@ -92,7 +92,7 @@ pub fn forbidden_access_maps_to_handshake_403_test() {
 
   response
   |> body
-  |> string.contains(messages.forbidden_code)
+  |> string.contains(api_error.forbidden_code)
   |> should.equal(True)
 }
 

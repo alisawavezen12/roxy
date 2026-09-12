@@ -11,8 +11,7 @@ pub fn session_cookie_request_is_not_cached_test() {
     test_request(http.Get)
     |> request.set_header("cookie", session.cookie_name <> "=opaque-token")
 
-  let response =
-    cache_policy.handle(request, fn() { wisp.ok() })
+  let response = cache_policy.handle(request, fn() { wisp.ok() })
 
   list.key_find(response.headers, "cache-control")
   |> should.equal(Ok("no-store"))

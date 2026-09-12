@@ -4,10 +4,10 @@ import gleam/http/request
 import gleam/list
 import gleam/string
 import gleeunit/should
+import shared/api/error as api_error
 import transport/http/middleware/cors as cors_middleware
 import transport/http/middleware/error_handler
 import transport/http/protocol/status
-import transport/protocol/messages
 import transport/transport_context
 import wisp
 
@@ -55,7 +55,7 @@ pub fn crashing_pipeline_returns_safe_json_500_test() {
   case response.body {
     wisp.Text(body) -> {
       body
-      |> string.contains(messages.internal_error_code)
+      |> string.contains(api_error.internal_error_code)
       |> should.equal(True)
 
       body

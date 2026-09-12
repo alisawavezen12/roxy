@@ -1,6 +1,7 @@
 import gleam/bytes_tree
 import gleam/http/response
 import mist
+import shared/api/error as api_error
 import transport/http/protocol/status
 import transport/protocol/messages
 import transport/transport_context
@@ -11,9 +12,9 @@ pub fn too_many_requests(
   let request_id = transport_context.request_id(context)
   let body =
     "{\"error\":{\"code\":\""
-    <> messages.rate_limited_code
+    <> api_error.rate_limited_code
     <> "\",\"message\":\""
-    <> messages.rate_limited_message
+    <> api_error.rate_limited_message
     <> "\",\"request_id\":\""
     <> request_id
     <> "\"}}"

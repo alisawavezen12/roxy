@@ -4,10 +4,10 @@ import gleam/http/request as http_request
 import gleam/http/response as http_response
 import gleam/list
 import gleam/string
+import shared/api/error as api_error
 import transport/http/protocol/api_errors
 import transport/http/protocol/cors as cors_policy
 import transport/http/protocol/status
-import transport/protocol/messages
 import transport/transport_context
 import wisp
 
@@ -78,8 +78,8 @@ fn preflight_response(
     False ->
       api_errors.response(
         status.forbidden,
-        messages.cors_forbidden_code,
-        messages.cors_forbidden_message,
+        api_error.cors_forbidden_code,
+        api_error.cors_forbidden_message,
         context,
       )
   }

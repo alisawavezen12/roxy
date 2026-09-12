@@ -16,8 +16,10 @@ pub fn token_hash_is_one_way_and_deterministic_test() {
 }
 
 pub fn random_session_tokens_are_not_reused_test() {
-  let first = crypto.strong_random_bytes(32) |> bit_array.base64_url_encode(False)
-  let second = crypto.strong_random_bytes(32) |> bit_array.base64_url_encode(False)
+  let first =
+    crypto.strong_random_bytes(32) |> bit_array.base64_url_encode(False)
+  let second =
+    crypto.strong_random_bytes(32) |> bit_array.base64_url_encode(False)
 
   first
   |> should.not_equal(second)

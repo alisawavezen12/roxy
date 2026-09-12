@@ -8,10 +8,10 @@ import gleam/http/response as http_response
 import gleam/list
 import gleam/option
 import gleam/result
-import pog
 import logging
 import observability/logger
 import observability/metrics
+import pog
 import transport/transport_context
 import wisp
 
@@ -71,11 +71,13 @@ pub fn principal(
 ) -> option.Option(access.Principal) {
   case http_request |> request.get_cookies |> list.key_find(cookie_name) {
     Ok(token) ->
-      case session_service.verify(
-        app_dependencies.postgres(dependencies),
-        token,
-        app_dependencies.config(dependencies).postgres.query_timeout,
-      ) {
+      case
+        session_service.verify(
+          app_dependencies.postgres(dependencies),
+          token,
+          app_dependencies.config(dependencies).postgres.query_timeout,
+        )
+      {
         Ok(principal) -> option.Some(principal)
         Error(reason) -> {
           case reason {
@@ -146,9 +148,7 @@ pub fn clear_cookie(
   )
 }
 
-fn verification_reason(
-  reason: session_service.VerificationError,
-) -> String {
+fn verification_reason(reason: session_service.VerificationError) -> String {
   case reason {
     session_service.InvalidToken -> "invalid_token"
     session_service.Expired -> "expired"

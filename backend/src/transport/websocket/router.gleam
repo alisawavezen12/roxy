@@ -10,12 +10,17 @@ import logging
 import mist
 import observability/logger
 import observability/metrics
+import transport/http/protocol/status
 import transport/session
 import transport/transport_context
 import transport/websocket/connection/context as connection_context
 import transport/websocket/handlers/socket
 import transport/websocket/handshake/error_response
 import transport/websocket/handshake/validation
+
+const nanoseconds_per_second = 1_000_000_000
+
+const nanoseconds_per_millisecond = 1_000_000
 
 pub type Handler =
   fn(
@@ -73,8 +78,7 @@ fn handle(
   {
     Error(error) -> error_response.response(error, context)
     Ok(Nil) -> {
-      let principal =
-        session.principal(http_request, dependencies, context)
+      let principal = session.principal(http_request, dependencies, context)
       case access.authorize(route.access, principal) {
         Error(access.Unauthenticated) ->
           error_response.response(
@@ -117,7 +121,7 @@ fn log_handshake(
   started_at: timestamp.Timestamp,
 ) -> Nil {
   let duration_ms = elapsed_milliseconds(started_at)
-  let level = case response.status >= 500 {
+  let level = case response.status >= status.internal_server_error {
     True -> logging.Error
     False -> logging.Info
   }
@@ -138,10 +142,10 @@ fn elapsed_milliseconds(started: timestamp.Timestamp) -> Int {
     timestamp.to_unix_seconds_and_nanoseconds(started)
   let total_nanoseconds =
     { seconds - started_seconds }
-    * 1_000_000_000
+    * nanoseconds_per_second
     + nanoseconds
     - started_nanoseconds
-  total_nanoseconds / 1_000_000
+  total_nanoseconds / nanoseconds_per_millisecond
 }
 
 fn find_route(path: String, routes: List(Route)) -> option.Option(Route) {

@@ -11,6 +11,7 @@ import gleam/otp/supervision
 import gleeunit/should
 import mist
 import transport/http/protocol/api_errors
+import transport/http/protocol/status
 import transport/transport_context
 import wisp
 import wisp/wisp_mist
@@ -22,7 +23,7 @@ pub fn crash_does_not_stop_http_server_test() {
       case request.path {
         "/test/crash" ->
           api_errors.response(
-            500,
+            status.internal_server_error,
             "internal",
             "Internal server error",
             transport_context.new(),
@@ -51,11 +52,11 @@ pub fn crash_does_not_stop_http_server_test() {
 
   let crash_response = get(port, "/test/crash")
   crash_response.status
-  |> should.equal(500)
+  |> should.equal(status.internal_server_error)
 
   let health_response = get(port, "/health")
   health_response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 
   process.send_exit(started.pid)
 }

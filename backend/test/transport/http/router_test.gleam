@@ -17,6 +17,7 @@ import observability/metrics
 import pog
 import ratelimit/limiter
 
+import transport/http/protocol/status
 import transport/http/router
 import wisp
 
@@ -114,7 +115,7 @@ pub fn readiness_route_returns_service_unavailable_without_database_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(503)
+  |> should.equal(status.service_unavailable)
 
   request_id_header(response)
   |> string.starts_with("req_")
@@ -134,7 +135,7 @@ pub fn health_route_returns_ok_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn unknown_route_returns_not_found_test() {
@@ -150,7 +151,7 @@ pub fn unknown_route_returns_not_found_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(404)
+  |> should.equal(status.not_found)
 }
 
 pub fn health_route_supports_head_test() {
@@ -166,7 +167,7 @@ pub fn health_route_supports_head_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn allowed_origin_receives_credentialed_cors_headers_test() {
@@ -206,7 +207,7 @@ pub fn origin_port_must_match_exactly_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 
   list.key_find(response.headers, "access-control-allow-origin")
   |> should.equal(Error(Nil))
@@ -228,7 +229,7 @@ pub fn valid_preflight_returns_explicit_policy_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(204)
+  |> should.equal(status.no_content)
 
   list.key_find(response.headers, "access-control-allow-origin")
   |> should.equal(Ok("http://localhost:1234"))
@@ -264,7 +265,7 @@ pub fn preflight_rejects_unlisted_request_header_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(403)
+  |> should.equal(status.forbidden)
 
   list.key_find(response.headers, "access-control-allow-origin")
   |> should.equal(Error(Nil))
@@ -285,7 +286,7 @@ pub fn preflight_rejects_unlisted_method_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(403)
+  |> should.equal(status.forbidden)
 }
 
 pub fn cross_site_unsafe_request_is_rejected_before_routing_test() {
@@ -302,7 +303,7 @@ pub fn cross_site_unsafe_request_is_rejected_before_routing_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(403)
+  |> should.equal(status.forbidden)
   case response.body {
     wisp.Text(body) ->
       body
@@ -326,7 +327,7 @@ pub fn allowed_origin_unsafe_request_reaches_routing_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(405)
+  |> should.equal(status.method_not_allowed)
   list.key_find(response.headers, "access-control-allow-origin")
   |> should.equal(Ok("http://localhost:1234"))
 }
@@ -344,7 +345,7 @@ pub fn health_route_rejects_unsupported_method_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status
-  |> should.equal(405)
+  |> should.equal(status.method_not_allowed)
 
   list.key_find(response.headers, "allow")
   |> should.equal(Ok("GET, HEAD"))

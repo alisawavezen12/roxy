@@ -44,7 +44,7 @@ pub fn api_errors_are_json_and_keep_request_id_test() {
     )
 
   response.status
-  |> should.equal(415)
+  |> should.equal(status.unsupported_media_type)
 
   list.key_find(response.headers, "content-type")
   |> should.equal(Ok("application/json; charset=utf-8"))

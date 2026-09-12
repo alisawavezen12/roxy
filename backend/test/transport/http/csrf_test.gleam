@@ -7,6 +7,7 @@ import gleam/string
 import gleeunit/should
 import transport/http/middleware/csrf
 import transport/http/protocol/http_errors
+import transport/http/protocol/status
 import transport/transport_context
 import wisp
 
@@ -20,7 +21,7 @@ pub fn safe_method_does_not_require_origin_test() {
     })
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn allowed_cross_origin_write_keeps_session_cookie_test() {
@@ -30,18 +31,22 @@ pub fn allowed_cross_origin_write_keeps_session_cookie_test() {
     |> request.set_header("cookie", "roxy_session=token")
 
   let assert Ok(response) =
-    csrf.handle(request, origins(), transport(), transport_context.new(), fn(
-      protected_request,
-    ) {
-      protected_request
-      |> request.get_cookies
-      |> list.key_find("roxy_session")
-      |> should.equal(Ok("token"))
-      Ok(wisp.ok())
-    })
+    csrf.handle(
+      request,
+      origins(),
+      transport(),
+      transport_context.new(),
+      fn(protected_request) {
+        protected_request
+        |> request.get_cookies
+        |> list.key_find("roxy_session")
+        |> should.equal(Ok("token"))
+        Ok(wisp.ok())
+      },
+    )
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn public_backend_origin_is_allowed_test() {
@@ -55,7 +60,7 @@ pub fn public_backend_origin_is_allowed_test() {
     })
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn allowed_referer_is_used_when_origin_is_missing_test() {
@@ -69,7 +74,7 @@ pub fn allowed_referer_is_used_when_origin_is_missing_test() {
     })
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn disallowed_origin_rejects_write_test() {
@@ -102,13 +107,17 @@ pub fn missing_origin_strips_cookies_before_write_test() {
     |> request.set_header("cookie", "roxy_session=token; preference=compact")
 
   let assert Ok(_) =
-    csrf.handle(request, origins(), transport(), transport_context.new(), fn(
-      protected_request,
-    ) {
-      request.get_header(protected_request, "cookie")
-      |> should.equal(Error(Nil))
-      Ok(wisp.ok())
-    })
+    csrf.handle(
+      request,
+      origins(),
+      transport(),
+      transport_context.new(),
+      fn(protected_request) {
+        request.get_header(protected_request, "cookie")
+        |> should.equal(Error(Nil))
+        Ok(wisp.ok())
+      },
+    )
 }
 
 pub fn origin_header_does_not_accept_paths_test() {

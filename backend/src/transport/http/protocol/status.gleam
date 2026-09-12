@@ -1,5 +1,11 @@
 pub const ok = 200
 
+pub const no_content = 204
+
+pub const multiple_choices = 300
+
+pub const bad_request = 400
+
 pub const not_found = 404
 
 pub const method_not_allowed = 405

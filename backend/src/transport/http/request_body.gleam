@@ -5,6 +5,7 @@ import gleam/json
 import gleam/string
 import transport/http/middleware/error_handler
 import transport/http/protocol/http_errors
+import transport/http/protocol/status
 import transport/transport_context
 import wisp
 
@@ -89,9 +90,12 @@ fn normalize_multipart_response(
   context: transport_context.TransportContext,
 ) -> wisp.Response {
   case response.status {
-    400 -> error_handler.response(http_errors.InvalidBody, context)
-    413 -> error_handler.response(http_errors.PayloadTooLarge, context)
-    415 -> error_handler.response(http_errors.UnsupportedMediaType, context)
+    value if value == status.bad_request ->
+      error_handler.response(http_errors.InvalidBody, context)
+    value if value == status.payload_too_large ->
+      error_handler.response(http_errors.PayloadTooLarge, context)
+    value if value == status.unsupported_media_type ->
+      error_handler.response(http_errors.UnsupportedMediaType, context)
     _ -> response
   }
 }

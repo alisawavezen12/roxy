@@ -25,6 +25,7 @@ import pog
 import ratelimit/limiter
 
 import transport/dispatcher
+import transport/http/protocol/status
 import transport/http/router as http_router
 import transport/websocket/client
 import wisp/wisp_mist
@@ -48,7 +49,7 @@ pub fn connect_echo_ping_close_test() {
   process.sleep(20)
 
   get(port, "/health").status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 
   process.send_exit(server.pid)
 }
@@ -62,7 +63,7 @@ pub fn oversized_message_closes_only_connection_test() {
   let assert Error(_) = client.receive_frame(connection, 2000)
 
   get(port, "/health").status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 
   let assert Ok(second_connection) = client.connect(websocket_url(port), origin)
   let assert Ok(Nil) = client.send_text(second_connection, "ok")
@@ -81,7 +82,7 @@ pub fn disallowed_origin_cannot_connect_test() {
     client.connect(websocket_url(port), "http://localhost:4321")
 
   get(port, "/health").status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 
   process.send_exit(server.pid)
 }
@@ -92,7 +93,7 @@ pub fn invalid_websocket_method_returns_405_test() {
   let response = websocket_http_request(port, http.Post, origin)
 
   response.status
-  |> should.equal(405)
+  |> should.equal(status.method_not_allowed)
 
   response.body
   |> string.contains("method_not_allowed")
@@ -110,7 +111,7 @@ pub fn malformed_websocket_handshake_returns_400_test() {
   let response = websocket_http_request(port, http.Get, origin)
 
   response.status
-  |> should.equal(400)
+  |> should.equal(status.bad_request)
 
   response.body
   |> string.contains("invalid_input")

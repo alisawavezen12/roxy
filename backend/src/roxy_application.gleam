@@ -13,6 +13,9 @@ import wisp/wisp_mist
 import transport/dispatcher
 import transport/http/router as http_router
 
+const restart_intensity = 3
+const restart_period_seconds = 10
+
 pub fn start() -> Nil {
   let assert Ok(Nil) = env.load()
   logging.configure()
@@ -42,7 +45,7 @@ pub fn start() -> Nil {
 
   let assert Ok(_) =
     supervisor.new(supervisor.RestForOne)
-    |> supervisor.restart_tolerance(3, 10)
+    |> supervisor.restart_tolerance(restart_intensity, restart_period_seconds)
     |> supervisor.add(postgres_child)
     |> supervisor.add(rate_limiter_child)
     |> supervisor.add(metrics_child)

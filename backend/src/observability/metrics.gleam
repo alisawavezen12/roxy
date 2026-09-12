@@ -1,6 +1,7 @@
 import gleam/erlang/process
 import gleam/otp/actor
 import gleam/otp/supervision
+import transport/http/protocol/status
 
 const process_name = "roxy_metrics"
 
@@ -101,9 +102,18 @@ fn record_metric(state: Snapshot, metric: Metric) -> Snapshot {
       Snapshot(
         ..state,
         http_requests: state.http_requests + 1,
-        http_2xx: increment_if(state.http_2xx, status >= 200 && status < 300),
-        http_4xx: increment_if(state.http_4xx, status >= 400 && status < 500),
-        http_5xx: increment_if(state.http_5xx, status >= 500),
+        http_2xx: increment_if(
+          state.http_2xx,
+          status >= status.ok && status < status.multiple_choices,
+        ),
+        http_4xx: increment_if(
+          state.http_4xx,
+          status >= status.bad_request && status < status.internal_server_error,
+        ),
+        http_5xx: increment_if(
+          state.http_5xx,
+          status >= status.internal_server_error,
+        ),
         http_duration_total_ms: state.http_duration_total_ms + duration_ms,
       )
     WebsocketHandshake(_, _) ->
@@ -136,8 +146,7 @@ fn record_metric(state: Snapshot, metric: Metric) -> Snapshot {
       Snapshot(..state, session_invalid: state.session_invalid + 1)
     SessionStoreFailed ->
       Snapshot(..state, session_store_failed: state.session_store_failed + 1)
-    CsrfRejected ->
-      Snapshot(..state, csrf_rejected: state.csrf_rejected + 1)
+    CsrfRejected -> Snapshot(..state, csrf_rejected: state.csrf_rejected + 1)
     DbProbeFailed ->
       Snapshot(..state, db_probe_failed: state.db_probe_failed + 1)
     SupervisorRestarted ->

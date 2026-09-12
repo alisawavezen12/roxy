@@ -61,7 +61,12 @@ pub fn response(
         context,
       )
     http_errors.InvalidBody ->
-      api_errors.response(400, "invalid_body", "Invalid request body", context)
+      api_errors.response(
+        status.bad_request,
+        "invalid_body",
+        "Invalid request body",
+        context,
+      )
     http_errors.PayloadTooLarge -> api_errors.payload_too_large(context)
     http_errors.TooManyRequests ->
       api_errors.response(

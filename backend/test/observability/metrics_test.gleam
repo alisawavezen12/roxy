@@ -1,6 +1,7 @@
 import gleam/otp/static_supervisor as supervisor
 import gleeunit/should
 import observability/metrics
+import transport/http/protocol/status
 
 pub fn metrics_count_http_statuses_and_latency_test() {
   let #(metrics, child) = metrics.new_child()
@@ -9,9 +10,12 @@ pub fn metrics_count_http_statuses_and_latency_test() {
     |> supervisor.add(child)
     |> supervisor.start
 
-  metrics.record(metrics, metrics.HttpRequestCompleted(200, 12))
-  metrics.record(metrics, metrics.HttpRequestCompleted(404, 8))
-  metrics.record(metrics, metrics.HttpRequestCompleted(500, 20))
+  metrics.record(metrics, metrics.HttpRequestCompleted(status.ok, 12))
+  metrics.record(metrics, metrics.HttpRequestCompleted(status.not_found, 8))
+  metrics.record(
+    metrics,
+    metrics.HttpRequestCompleted(status.internal_server_error, 20),
+  )
 
   let snapshot = metrics.snapshot(metrics)
   snapshot.http_requests

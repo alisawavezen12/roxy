@@ -6,6 +6,7 @@ import gleam/string
 import gleeunit/should
 import transport/http/middleware/cors as cors_middleware
 import transport/http/middleware/error_handler
+import transport/http/protocol/status
 import transport/transport_context
 import wisp
 
@@ -26,7 +27,7 @@ pub fn cors_headers_are_added_to_safe_crash_response_test() {
     })
 
   response.status
-  |> should.equal(500)
+  |> should.equal(status.internal_server_error)
 
   list.key_find(response.headers, "access-control-allow-origin")
   |> should.equal(Ok("http://localhost:1234"))
@@ -45,7 +46,7 @@ pub fn crashing_pipeline_returns_safe_json_500_test() {
     })
 
   response.status
-  |> should.equal(500)
+  |> should.equal(status.internal_server_error)
 
   list.key_find(response.headers, "x-request-id")
   |> should.equal(Ok(transport_context.request_id(context)))

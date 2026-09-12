@@ -3,6 +3,7 @@ import gleam/http/request
 
 import gleam/string
 import gleeunit/should
+import transport/http/protocol/status
 import transport/http/request_body
 import transport/transport_context
 import wisp
@@ -11,7 +12,7 @@ pub fn malformed_json_maps_to_400_test() {
   let response = parse_json(<<"{":utf8>>)
 
   response.status
-  |> should.equal(400)
+  |> should.equal(status.bad_request)
 
   body(response)
   |> string.contains("invalid_body")
@@ -22,7 +23,7 @@ pub fn unsupported_json_content_type_maps_to_415_test() {
   let response = parse_json_with_content_type("text/plain", <<"{}":utf8>>)
 
   response.status
-  |> should.equal(415)
+  |> should.equal(status.unsupported_media_type)
 
   body(response)
   |> string.contains("unsupported_media_type")
@@ -33,7 +34,7 @@ pub fn valid_json_is_passed_as_transport_body_test() {
   let response = parse_json(<<"{\"name\":\"roxy\"}":utf8>>)
 
   response.status
-  |> should.equal(200)
+  |> should.equal(status.ok)
 }
 
 pub fn multipart_without_boundary_maps_to_400_test() {
@@ -50,7 +51,7 @@ pub fn multipart_without_boundary_maps_to_400_test() {
     )
 
   response.status
-  |> should.equal(400)
+  |> should.equal(status.bad_request)
 }
 
 fn parse_json(body_bits: BitArray) -> wisp.Response {

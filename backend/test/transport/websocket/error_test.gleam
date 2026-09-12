@@ -10,6 +10,7 @@ import gleam/result
 import gleam/string
 import gleeunit/should
 import mist
+import transport/http/protocol/status
 import transport/transport_context
 import transport/websocket/handshake/error_response
 import transport/websocket/handshake/validation
@@ -22,7 +23,7 @@ pub fn method_not_allowed_maps_to_handshake_405_test() {
     )
 
   response.status
-  |> should.equal(405)
+  |> should.equal(status.method_not_allowed)
 
   response
   |> body
@@ -38,7 +39,7 @@ pub fn origin_not_allowed_maps_to_handshake_403_test() {
     )
 
   response.status
-  |> should.equal(403)
+  |> should.equal(status.forbidden)
 
   response
   |> body
@@ -54,7 +55,7 @@ pub fn invalid_handshake_maps_to_handshake_400_test() {
     )
 
   response.status
-  |> should.equal(400)
+  |> should.equal(status.bad_request)
 
   response
   |> body
@@ -70,7 +71,7 @@ pub fn unauthenticated_access_maps_to_handshake_401_test() {
     )
 
   response.status
-  |> should.equal(401)
+  |> should.equal(status.unauthorized)
 
   response
   |> body
@@ -86,7 +87,7 @@ pub fn forbidden_access_maps_to_handshake_403_test() {
     )
 
   response.status
-  |> should.equal(403)
+  |> should.equal(status.forbidden)
 
   response
   |> body

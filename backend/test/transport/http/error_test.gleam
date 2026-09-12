@@ -6,6 +6,7 @@ import gleeunit/should
 
 import transport/http/middleware/error_handler
 import transport/http/protocol/http_errors
+import transport/http/protocol/status
 import transport/transport_context
 import wisp
 
@@ -14,7 +15,7 @@ pub fn route_not_found_maps_to_http_404_test() {
     error_handler.response(http_errors.NotFound, transport_context.new())
 
   response.status
-  |> should.equal(404)
+  |> should.equal(status.not_found)
 
   response
   |> body
@@ -30,7 +31,7 @@ pub fn method_not_allowed_maps_to_http_405_with_allow_test() {
     )
 
   response.status
-  |> should.equal(405)
+  |> should.equal(status.method_not_allowed)
 
   list.key_find(response.headers, "allow")
   |> should.equal(Ok("GET, HEAD"))
@@ -49,7 +50,7 @@ pub fn unsupported_media_type_maps_to_http_415_test() {
     )
 
   response.status
-  |> should.equal(415)
+  |> should.equal(status.unsupported_media_type)
 
   response
   |> body
@@ -62,7 +63,7 @@ pub fn payload_too_large_maps_to_http_413_test() {
     error_handler.response(http_errors.PayloadTooLarge, transport_context.new())
 
   response.status
-  |> should.equal(413)
+  |> should.equal(status.payload_too_large)
 
   response
   |> body
@@ -78,7 +79,7 @@ pub fn unauthenticated_access_maps_to_http_401_test() {
     )
 
   response.status
-  |> should.equal(401)
+  |> should.equal(status.unauthorized)
 
   response
   |> body
@@ -94,7 +95,7 @@ pub fn forbidden_access_maps_to_http_403_test() {
     )
 
   response.status
-  |> should.equal(403)
+  |> should.equal(status.forbidden)
 
   response
   |> body

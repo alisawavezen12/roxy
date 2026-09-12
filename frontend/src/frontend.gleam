@@ -1,3 +1,4 @@
+import config
 import gleam/option.{type Option, None, Some}
 import lustre
 import lustre/attribute
@@ -49,7 +50,10 @@ fn update(model: Model, message: Message) -> #(Model, Effect(Message)) {
 }
 
 fn fetch_health() -> Effect(Message) {
-  rsvp.get("/api/health", rsvp.expect_json(health.decoder(), ApiReturnedHealth))
+  rsvp.get(
+    config.api_origin <> "/health",
+    rsvp.expect_json(health.decoder(), ApiReturnedHealth),
+  )
 }
 
 fn view(model: Model) -> Element(Message) {

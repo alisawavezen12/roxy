@@ -3,11 +3,10 @@ services:
     image: roxy-backend-prod
     build:
       context: .
-      dockerfile: Dockerfile
-      target: backend-runtime
+      dockerfile: backend/Dockerfile.prod
     init: true
-    expose:
-      - "8080"
+    ports:
+      - "127.0.0.1:8080:8080"
     env_file:
       - .env
     environment:
@@ -20,33 +19,10 @@ services:
       start_period: 10s
     stop_grace_period: 30s
     networks:
-      - production_internal
       - database_internal
     depends_on:
       postgres:
         condition: service_healthy
-
-  frontend:
-    image: roxy-frontend-prod
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: frontend-runtime
-    init: true
-    ports:
-      - "127.0.0.1:8081:8080"
-    depends_on:
-      backend:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--output-document=/dev/null", "http://127.0.0.1:8080/health"]
-      interval: 10s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
-    stop_grace_period: 10s
-    networks:
-      - production_internal
 
   postgres:
     env_file:
@@ -70,8 +46,6 @@ services:
     profiles: ["local-infra"]
 
 networks:
-  production_internal:
-    internal: true
   database_internal:
     internal: true
 

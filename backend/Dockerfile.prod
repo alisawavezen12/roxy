@@ -1,0 +1,31 @@
+ARG GLEAM_VERSION=v1.18.1
+
+FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine AS backend-build
+
+WORKDIR /build
+
+COPY ./shared/gleam.toml ./shared/manifest.toml ./shared/
+COPY ./backend/gleam.toml ./backend/manifest.toml ./backend/
+
+RUN cd /build/shared && gleam deps download
+RUN cd /build/backend && gleam deps download
+
+COPY ./shared/src ./shared/src
+COPY ./backend/src ./backend/src
+
+RUN cd /build/backend && gleam export erlang-shipment
+
+FROM erlang:28-alpine AS backend-runtime
+
+RUN addgroup -S roxy \
+  && adduser -S -D -H -G roxy roxy
+
+WORKDIR /app
+
+COPY --from=backend-build --chown=roxy:roxy /build/backend/build/erlang-shipment /app
+
+USER roxy
+
+EXPOSE 8080
+
+CMD ["sh", "./entrypoint.sh", "run"]

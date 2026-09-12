@@ -144,25 +144,40 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml down -v
 
 ## PRODUCTION
 
-Production frontend собирается официальной командой Lustre с `--minify` и запускается в non-root Nginx. Backend экспортируется через `gleam export erlang-shipment` и запускается в non-root Erlang runtime image без Gleam compiler, Bun, `watchexec` и исходников.
+Frontend и backend — два независимых production deployment-а:
 
-### Собрать production images
+- frontend собирается в статические файлы Lustre и может быть загружен на отдельный hosting/CDN;
+- backend собирается в Erlang shipment и запускается отдельно вместе с БД, storage и jobs;
+- frontend не проксирует `/api` через Docker. В production URL backend вшивается в frontend при сборке через `API_ORIGIN`;
+- `CORS_ALLOWED_ORIGINS` на backend должен содержать точный origin frontend (например, `https://app.example.com`, без `/` в конце).
 
-```sh
-docker compose -f docker-compose.yml -f docker-compose.prod.yml build backend frontend
-```
-
-### Локально проверить production images
-
-Для текущего foundation backend `DATABASE_URL` ещё не используется. После подключения PostgreSQL передавай настоящий production secret/config через environment или secrets mechanism.
+### Собрать production frontend
 
 ```sh
-docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait backend frontend
+docker compose -f docker-compose.frontend.prod.yml build --build-arg API_ORIGIN=https://api.example.com frontend
 ```
 
-Локальный production frontend: http://localhost:8081
+Локальная проверка production frontend:
 
-Production backend не имеет секции `ports` и подключён только к изолированной сети `production_internal`. `expose: 8080` лишь документирует внутренний порт и само по себе не считается защитой. Frontend-контейнер проксирует `/api/` к backend внутри этой сети.
+```sh
+docker compose -f docker-compose.frontend.prod.yml up -d --wait frontend
+```
+
+Frontend будет доступен на http://localhost:8081. Для реального frontend hosting можно использовать тот же `API_ORIGIN` и загрузить содержимое `/usr/share/nginx/html` из образа либо выполнить сборку frontend вне Docker.
+
+### Собрать production backend stack
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.prod.yml build backend
+```
+
+Запуск локального backend stack с PostgreSQL:
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --wait backend postgres
+```
+
+Production backend слушает localhost:8080 в локальной проверке. На реальном сервере его нужно подключить к HTTPS reverse proxy/load balancer, который будет публиковать API origin. PostgreSQL и MinIO в production Compose предназначены для local-infra проверки; настоящий production должен получать DB и S3 через runtime config/secrets.
 
 ### Production traffic policy
 
@@ -207,14 +222,16 @@ Named volumes создаются только для реальных данны
 
 ```text
 roxy/
-├── Dockerfile                 # production multi-stage build
+├── docker-compose.frontend.prod.yml # отдельный production frontend
 ├── docker-compose.yml         # PostgreSQL, MinIO и named volumes
 ├── docker-compose.dev.yml     # detached DEV frontend/backend
-├── docker-compose.prod.yml    # production runtime frontend/backend
+├── docker-compose.prod.yml    # production backend + local DB
 ├── .dockerignore
 ├── backend/
-│   └── Dockerfile.dev         # Gleam + watchexec
+│   ├── Dockerfile.dev         # Gleam + watchexec
+│   └── Dockerfile.prod        # Erlang shipment runtime
 └── frontend/
     ├── Dockerfile.dev         # Gleam + system Bun + Lustre dev server
-    └── nginx.conf             # production static frontend + API proxy
+    ├── Dockerfile.prod        # standalone static frontend image
+    └── nginx.conf             # static frontend runtime
 ```

@@ -5,6 +5,7 @@ import config/origins
 import config/session
 import config/transport
 import db/config as postgres_config_module
+import gleam/bit_array
 import gleam/erlang/process
 
 import gleam/http
@@ -72,6 +73,25 @@ pub fn oversized_message_closes_only_connection_test() {
   |> should.equal(Ok(client.Text("ok")))
 
   client.close(second_connection)
+  process.send_exit(server.pid)
+}
+
+pub fn maximum_sized_messages_are_accepted_test() {
+  let port = 18_087
+  let server = start_server(port)
+  let assert Ok(connection) = client.connect(websocket_url(port), origin)
+  let text = string.repeat("x", 65_536)
+  let binary = bit_array.from_string(text)
+
+  let assert Ok(Nil) = client.send_text(connection, text)
+  client.receive_frame(connection, 2000)
+  |> should.equal(Ok(client.Text(text)))
+
+  let assert Ok(Nil) = client.send_binary(connection, binary)
+  client.receive_frame(connection, 2000)
+  |> should.equal(Ok(client.Binary(binary)))
+
+  client.close(connection)
   process.send_exit(server.pid)
 }
 

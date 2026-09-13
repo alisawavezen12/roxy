@@ -1,6 +1,7 @@
 import application/access
 import application/dependencies
 import exception
+import gleam/erlang/process
 import gleam/http/request
 import gleam/http/response
 import gleam/option
@@ -30,22 +31,37 @@ pub fn handle(
     Ok(Nil) ->
       mist.websocket(
         request:,
-        on_init: fn(_connection) {
-          log_connected(context)
-          metrics.record(dependencies.metrics, metrics.WebsocketConnected)
-          #(State(context:, limiter: dependencies.rate_limiter), option.None)
+        on_init: fn(connection) {
+          on_connect(dependencies, context, connection)
         },
-        handler: handle_message,
-        on_close: fn(state) {
-          limiter.close_websocket(state.limiter)
-          metrics.record(state.context.metrics, metrics.WebsocketClosed)
-          log_closed(state.context)
-        },
+        handler: on_message,
+        on_close: on_close,
       )
   }
 }
 
-fn handle_message(
+fn on_connect(
+  dependencies: dependencies.Dependencies,
+  context: connection_context.ConnectionContext,
+  _connection: mist.WebsocketConnection,
+) -> #(State, option.Option(process.Selector(Nil))) {
+  log_connected(context)
+  metrics.record(dependencies.metrics, metrics.WebsocketConnected)
+  #(State(context:, limiter: dependencies.rate_limiter), option.None)
+}
+
+fn on_message(
+  state: State,
+  message: mist.WebsocketMessage(Nil),
+  connection: mist.WebsocketConnection,
+) -> mist.Next(State, Nil) {
+  case message_within_limit(message) {
+    False -> message_too_large(state)
+    True -> rate_limit_message(state, message, connection)
+  }
+}
+
+fn rate_limit_message(
   state: State,
   message: mist.WebsocketMessage(Nil),
   connection: mist.WebsocketConnection,
@@ -93,18 +109,22 @@ fn dispatch_message(
   }
 }
 
+fn message_within_limit(message: mist.WebsocketMessage(Nil)) -> Bool {
+  case message {
+    mist.Text(message) -> limits.text_within_limit(message)
+    mist.Binary(message) -> limits.binary_within_limit(message)
+    mist.Closed | mist.Shutdown | mist.Custom(_) -> True
+  }
+}
+
 fn handle_text(
   state: State,
   message: String,
   connection: mist.WebsocketConnection,
 ) -> mist.Next(State, Nil) {
-  case limits.text_within_limit(message) {
-    False -> message_too_large(state)
-    True ->
-      case mist.send_text_frame(connection, message) {
-        Ok(Nil) -> mist.continue(state)
-        Error(_) -> send_failed(state)
-      }
+  case mist.send_text_frame(connection, message) {
+    Ok(Nil) -> mist.continue(state)
+    Error(_) -> send_failed(state)
   }
 }
 
@@ -113,13 +133,9 @@ fn handle_binary(
   message: BitArray,
   connection: mist.WebsocketConnection,
 ) -> mist.Next(State, Nil) {
-  case limits.binary_within_limit(message) {
-    False -> message_too_large(state)
-    True ->
-      case mist.send_binary_frame(connection, message) {
-        Ok(Nil) -> mist.continue(state)
-        Error(_) -> send_failed(state)
-      }
+  case mist.send_binary_frame(connection, message) {
+    Ok(Nil) -> mist.continue(state)
+    Error(_) -> send_failed(state)
   }
 }
 
@@ -127,6 +143,12 @@ fn message_too_large(state: State) -> mist.Next(State, Nil) {
   metrics.record(state.context.metrics, metrics.WebsocketMessageTooLarge)
   log_error(state.context, "message_too_large")
   mist.stop_abnormal(messages.websocket_message_too_large)
+}
+
+fn on_close(state: State) -> Nil {
+  limiter.close_websocket(state.limiter)
+  metrics.record(state.context.metrics, metrics.WebsocketClosed)
+  log_closed(state.context)
 }
 
 fn send_failed(state: State) -> mist.Next(State, Nil) {

@@ -24,14 +24,8 @@ pub fn view() -> Element(Message) {
       html.div([attribute.class("onboarding__actions")], [
         button.view(button.Config(
           label: "Get started",
-          size: button.Large,
-          variant: button.Primary,
-          on_click: NoOp,
-        )),
-        button.view(button.Config(
-          label: "Learn more",
           size: button.Medium,
-          variant: button.Secondary,
+          variant: button.Primary,
           on_click: NoOp,
         )),
       ]),

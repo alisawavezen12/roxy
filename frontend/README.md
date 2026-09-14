@@ -64,15 +64,8 @@ shared application-level adapter is genuinely needed.
 
 ### `src/pages/`
 
-Screen-level composition and orchestration. Each page has its own directory
-with the page module and page-specific styles/assets:
-
-```text
-src/pages/onboarding/onboarding.gleam
-src/pages/onboarding/onboarding.css
-src/pages/not_found/not_found.gleam
-src/pages/not_found/not_found.css
-```
+Screen-level composition and orchestration. Each page should have its own
+directory containing its page module and page-specific styles or assets.
 
 A page owns the view and, when it becomes non-trivial, its screen-specific state
 and messages. Pages may combine `ui/` components, call application callbacks,
@@ -104,23 +97,11 @@ Reusable presentation and UI primitives:
 - Lustre elements and presentation attributes.
 
 Layouts are grouped under `ui/layout/`, and reusable UI components are grouped
-under `ui/components/`. Component-specific styles live next to their component:
-
-```text
-src/ui/layout/base_layout/base_layout.gleam
-src/ui/layout/base_layout/base_layout.css
-src/ui/components/button/button.gleam
-src/ui/components/button/button.css
-```
+under `ui/components/`. Component-specific styles live next to the component
+that uses them.
 
 `ui/` should focus on rendering and interaction wiring. It should not perform
 HTTP requests or own global application state.
-
-The current base layout is located at:
-
-```text
-src/ui/layout/base_layout/base_layout.gleam
-```
 
 ### `src/ui/styles/`
 

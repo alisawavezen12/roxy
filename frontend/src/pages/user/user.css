@@ -1,0 +1,132 @@
+.user-page {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.75fr);
+  gap: var(--space-8);
+  max-width: var(--content-width);
+  min-height: calc(100vh - (var(--space-8) * 2));
+  margin: 0 auto;
+  align-items: start;
+}
+
+.user-wall {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.user-page__heading {
+  margin-bottom: var(--space-4);
+}
+
+.user-page__eyebrow {
+  margin-bottom: var(--space-2);
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: var(--button-font-weight);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.user-page h1,
+.user-page h2,
+.user-page p {
+  margin: 0;
+}
+
+.user-page h1 {
+  color: var(--color-text);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1;
+}
+
+.post {
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.post__meta {
+  margin-bottom: var(--space-3);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.post h2 {
+  margin-bottom: var(--space-2);
+  color: var(--color-text);
+  font-size: var(--font-size-lg);
+}
+
+.post p,
+.user-bio,
+.user-status,
+.user-handle {
+  color: var(--color-text-muted);
+}
+
+.user-card {
+  position: sticky;
+  top: var(--space-8);
+  padding: var(--space-6);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.user-avatar {
+  width: 5rem;
+  height: 5rem;
+  display: grid;
+  place-items: center;
+  margin-bottom: var(--space-4);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--button-primary-text);
+  font-size: 2rem;
+  font-weight: var(--button-font-weight);
+}
+
+.user-card h2 {
+  margin-bottom: var(--space-1);
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+}
+
+.user-handle {
+  margin-bottom: var(--space-4) !important;
+}
+
+.user-status {
+  margin-bottom: var(--space-4) !important;
+  color: var(--color-accent);
+}
+
+.user-bio {
+  margin-bottom: var(--space-6) !important;
+}
+
+.user-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.user-links a {
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  text-decoration: underline;
+  text-decoration-color: var(--color-accent);
+  text-underline-offset: 0.2em;
+}
+
+@media (max-width: 700px) {
+  .user-page {
+    grid-template-columns: 1fr;
+    gap: var(--space-6);
+  }
+
+  .user-card {
+    position: static;
+    grid-row: 1;
+  }
+}

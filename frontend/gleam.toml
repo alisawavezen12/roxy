@@ -36,4 +36,6 @@ stylesheets = [
   { href = "/ui/styles/tokens.css" },
   { href = "/ui/styles/theme.css" },
   { href = "/ui/styles/globals.css" },
+  { href = "/pages/onboarding/onboarding.css" },
+  { href = "/pages/not_found/not_found.css" },
 ]

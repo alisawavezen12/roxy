@@ -1,0 +1,41 @@
+.onboarding {
+  min-height: calc(100vh - (var(--space-8) * 2));
+  display: grid;
+  place-items: center;
+}
+
+.onboarding__content {
+  max-width: 42rem;
+  text-align: center;
+}
+
+.onboarding__eyebrow {
+  margin-bottom: var(--space-3);
+  color: var(--color-accent);
+  font-size: var(--font-size-sm);
+  font-weight: var(--button-font-weight);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.onboarding h1 {
+  margin-bottom: var(--space-4);
+  color: var(--color-text);
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  line-height: 1;
+}
+
+.onboarding__description {
+  max-width: 34rem;
+  margin: 0 auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-lg);
+}
+
+.onboarding__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}

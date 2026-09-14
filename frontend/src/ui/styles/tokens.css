@@ -8,6 +8,20 @@
   --font-size-lg: 1.25rem;
   --font-size-xl: 1.5rem;
 
+  /* Buttons */
+  --button-font-weight: 600;
+  --button-line-height: 1.2;
+  --button-radius: var(--radius-md);
+  --button-height-sm: 2rem;
+  --button-height-md: 2.5rem;
+  --button-height-lg: 3rem;
+  --button-padding-y-sm: var(--space-2);
+  --button-padding-y-md: var(--space-3);
+  --button-padding-y-lg: var(--space-4);
+  --button-padding-x-sm: var(--space-3);
+  --button-padding-x-md: var(--space-4);
+  --button-padding-x-lg: var(--space-6);
+
   /* Spacing */
   --space-1: 0.25rem;
   --space-2: 0.5rem;

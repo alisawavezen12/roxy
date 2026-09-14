@@ -64,10 +64,19 @@ shared application-level adapter is genuinely needed.
 
 ### `src/pages/`
 
-Screen-level composition and orchestration. A page owns the view and, when it
-becomes non-trivial, its screen-specific state and messages. Pages may combine
-`ui/` components, call application callbacks, and translate domain data into
-page-facing state.
+Screen-level composition and orchestration. Each page has its own directory
+with the page module and page-specific styles/assets:
+
+```text
+src/pages/onboarding/onboarding.gleam
+src/pages/onboarding/onboarding.css
+src/pages/not_found/not_found.gleam
+src/pages/not_found/not_found.css
+```
+
+A page owns the view and, when it becomes non-trivial, its screen-specific state
+and messages. Pages may combine `ui/` components, call application callbacks,
+and translate domain data into page-facing state.
 
 Do not put generic UI primitives or transport implementation here.
 
@@ -89,6 +98,13 @@ Reusable presentation and UI primitives:
 - buttons, forms, lists, and other reusable components;
 - Lustre elements and presentation attributes.
 
+Component-specific styles live next to their component. For example:
+
+```text
+src/ui/button/button.gleam
+src/ui/button/button.css
+```
+
 `ui/` should focus on rendering and interaction wiring. It should not perform
 HTTP requests or own global application state.
 
@@ -108,8 +124,8 @@ Global visual system owned by the UI layer:
 - global styles.
 
 Styles are connected from `gleam.toml` and are kept separate from Gleam view
-code. Component-specific styles can be added near the relevant UI layer when
-that need appears.
+code. The shared styles directory must contain only global UI styles; component
+styles belong next to their component under `ui/`.
 
 ## Dependency rules
 

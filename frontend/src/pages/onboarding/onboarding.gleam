@@ -2,7 +2,7 @@ import app/message.{type Message, NoOp}
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
-import ui/button/button
+import ui/components/button/button
 
 pub fn view() -> Element(Message) {
   html.main([attribute.class("onboarding")], [

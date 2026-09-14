@@ -78,6 +78,11 @@ A page owns the view and, when it becomes non-trivial, its screen-specific state
 and messages. Pages may combine `ui/` components, call application callbacks,
 and translate domain data into page-facing state.
 
+Every page is wrapped by `ui/layout/base_layout/base_layout` in `app/view.gleam`
+by default. Page modules should return only their page content and must not wrap
+themselves in the base layout. A page may bypass the default layout only when
+that exception is intentional and documented in the root view composition.
+
 Do not put generic UI primitives or transport implementation here.
 
 ### `src/routes/`
@@ -98,11 +103,14 @@ Reusable presentation and UI primitives:
 - buttons, forms, lists, and other reusable components;
 - Lustre elements and presentation attributes.
 
-Component-specific styles live next to their component. For example:
+Layouts are grouped under `ui/layout/`, and reusable UI components are grouped
+under `ui/components/`. Component-specific styles live next to their component:
 
 ```text
-src/ui/button/button.gleam
-src/ui/button/button.css
+src/ui/layout/base_layout/base_layout.gleam
+src/ui/layout/base_layout/base_layout.css
+src/ui/components/button/button.gleam
+src/ui/components/button/button.css
 ```
 
 `ui/` should focus on rendering and interaction wiring. It should not perform
@@ -111,7 +119,7 @@ HTTP requests or own global application state.
 The current base layout is located at:
 
 ```text
-src/ui/layout/base_layout.gleam
+src/ui/layout/base_layout/base_layout.gleam
 ```
 
 ### `src/ui/styles/`
@@ -137,5 +145,7 @@ Use these rules when adding a module:
 4. `pages/` orchestrates a screen; reusable visual code belongs in `ui/`.
 5. `app/` coordinates the application; it should delegate domain rules to
    `domain/` and network work to `api/`.
-6. Add new modules only when a real feature needs them; avoid creating empty
+6. Pages use the base layout by default through the root application view; do not
+   duplicate layout wrappers inside page modules.
+7. Add new modules only when a real feature needs them; avoid creating empty
    abstractions in advance.

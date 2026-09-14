@@ -16,9 +16,5 @@ body {
   font-family: var(--font-sans);
 }
 
-.layout {
-  min-height: 100vh;
-  padding: var(--space-8) var(--space-6) var(--space-8);
-}
 
 

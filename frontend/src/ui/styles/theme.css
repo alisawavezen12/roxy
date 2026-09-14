@@ -1,30 +1,43 @@
 :root {
   color-scheme: dark;
 
-  --color-bg: #0c0d0e;
-  --color-surface: #151719;
-  --color-surface-hover: #1c1f22;
+  /* Base */
+  --color-bg: #1e1e24;
+  --color-surface: #252630;
+  --color-surface-hover: #2f3140;
 
-  --color-text: #f2f3f3;
-  --color-text-muted: #9da3a8;
+  /* Text */
+  --color-text: #f2f0f5;
+  --color-text-muted: #b8b5c4;
 
-  --color-border: #2a2e32;
+  /* Borders */
+  --color-border: #3a3d4f;
 
-  --color-accent: #6ea8fe;
-  --color-accent-hover: #8bb9ff;
+  /* Secondary */
+  --color-secondary: #292d3e;
+  --color-secondary-hover: #34394f;
 
-  --color-danger: #ef6b73;
-  --color-danger-hover: #f4868d;
+  /* Accent */
+  --color-accent: #f6aeeb;
+  --color-accent-hover: #f8c0ef;
 
-  --color-focus: #8bb9ff;
+  /* Danger */
+  --color-danger: #ef6a7a;
+  --color-danger-hover: #f27f8c;
 
+  /* Focus */
+  --color-focus: #f6aeeb;
+
+  /* Buttons */
   --button-primary-bg: var(--color-accent);
   --button-primary-bg-hover: var(--color-accent-hover);
-  --button-primary-text: #08101e;
-  --button-secondary-bg: var(--color-surface);
-  --button-secondary-bg-hover: var(--color-surface-hover);
+  --button-primary-text: #24151f;
+
+  --button-secondary-bg: var(--color-secondary);
+  --button-secondary-bg-hover: var(--color-secondary-hover);
   --button-secondary-text: var(--color-text);
+
   --button-danger-bg: var(--color-danger);
   --button-danger-bg-hover: var(--color-danger-hover);
-  --button-danger-text: #210709;
+  --button-danger-text: #1e1e24;
 }

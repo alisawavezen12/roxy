@@ -29,14 +29,11 @@ proxy = { from = "/api", to = "http://backend:8080/api" }
 outdir = "dist"
 minify = true
 
-[html]
+[tools.lustre.html]
 title = "Roxy"
 stylesheets = [
   { href = "/ui/styles/reset.css" },
   { href = "/ui/styles/tokens.css" },
   { href = "/ui/styles/theme.css" },
   { href = "/ui/styles/globals.css" },
-  { href = "/ui/layout/base_layout/base_layout.css" },
-  { href = "/pages/onboarding/onboarding.css" },
-  { href = "/pages/not_found/not_found.css" },
 ]

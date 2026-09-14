@@ -131,9 +131,14 @@ Global visual system owned by the UI layer:
 - theme variables;
 - global styles.
 
-Styles are connected from `gleam.toml` and are kept separate from Gleam view
-code. The shared styles directory must contain only global UI styles; component
-styles belong next to their component under `ui/`.
+Global styles are connected from `gleam.toml` and loaded with the application.
+Page, layout, and component styles are connected by their own Lustre view
+functions using a stylesheet link, so only styles required by the rendered view
+are requested. The shared styles directory must contain only global UI styles;
+component styles belong next to their component under `ui/`, and page styles
+belong next to their page. Docker uses `scripts/sync_css.sh` to publish every
+`src/**/*.css` file with the same relative path for both development and
+production, so CSS is not duplicated manually in `assets/`.
 
 ## Dependency rules
 

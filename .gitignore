@@ -2,5 +2,7 @@
 .DS_Store
 **/build/
 **/dist/
+frontend/assets/ui/
+frontend/assets/pages/
 
 erl_crash.dump

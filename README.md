@@ -11,7 +11,7 @@ DEV-окружение работает в фоне и управляется ч
 ### Первый запуск
 
 ```sh
-docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build -d --wait
+docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build --force-recreate -d --wait
 ```
 
 ### Обычный ежедневный запуск

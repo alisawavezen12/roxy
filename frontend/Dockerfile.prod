@@ -1,12 +1,8 @@
 ARG GLEAM_VERSION=v1.18.1
 ARG BUN_VERSION=1.2.22
-ARG API_ORIGIN
-
 FROM oven/bun:${BUN_VERSION}-alpine AS bun
 
 FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine AS frontend-build
-
-ARG API_ORIGIN
 
 COPY --from=bun /usr/local/bin/bun /usr/local/bin/bun
 
@@ -21,12 +17,13 @@ RUN cd /build/frontend && gleam deps download
 COPY ./shared/src ./shared/src
 COPY ./frontend/src ./frontend/src
 COPY ./frontend/assets ./frontend/assets
+COPY ./frontend/scripts ./frontend/scripts
+RUN sed -i 's/\r$//' ./frontend/scripts/*.sh \
+  && chmod +x ./frontend/scripts/*.sh
 
-RUN test -n "$API_ORIGIN" \
-  && case "$API_ORIGIN" in http://*|https://*) ;; *) exit 1 ;; esac \
-  && sed -i "s|\"/api\"|\"$API_ORIGIN\"|g" /build/frontend/src/config.gleam \
-  && cd /build/frontend \
+RUN cd /build/frontend \
   && gleam run -m lustre/dev build --minify --outdir=dist \
+  && sh scripts/sync_css.sh src dist \
   && rm -f dist/.gitkeep
 
 FROM nginxinc/nginx-unprivileged:1.29-alpine AS frontend-runtime

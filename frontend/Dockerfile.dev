@@ -23,7 +23,10 @@ RUN cd /workspace/frontend && gleam deps download
 COPY ./shared/src ./shared/src
 COPY ./frontend/src ./frontend/src
 COPY ./frontend/assets ./frontend/assets
+COPY ./frontend/scripts ./frontend/scripts
+RUN sed -i 's/\r$//' ./frontend/scripts/*.sh \
+  && chmod +x ./frontend/scripts/*.sh
 
 WORKDIR /workspace/frontend
 
-CMD ["watchexec", "--restart", "--poll", "1s", "--watch", "src", "--watch", "assets", "--watch", "../shared/src", "--", "gleam", "run", "-m", "lustre/dev", "start"]
+CMD ["watchexec", "--restart", "--poll", "1s", "--watch", "src", "--watch", "assets", "--watch", "../shared/src", "--", "sh", "./scripts/start-dev.sh"]

@@ -19,6 +19,13 @@ pub type Config(message) {
   Config(label: String, size: Size, variant: Variant, on_click: message)
 }
 
+pub fn stylesheet() -> Element(message) {
+  html.link([
+    attribute.rel("stylesheet"),
+    attribute.href("/ui/components/button/button.css"),
+  ])
+}
+
 pub fn view(config: Config(message)) -> Element(message) {
   html.button(
     [

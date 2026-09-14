@@ -6,6 +6,11 @@ import ui/components/button/button
 
 pub fn view() -> Element(Message) {
   html.main([attribute.class("onboarding")], [
+    html.link([
+      attribute.rel("stylesheet"),
+      attribute.href("/pages/onboarding/onboarding.css"),
+    ]),
+    button.stylesheet(),
     html.div([attribute.class("onboarding__content")], [
       html.p([attribute.class("onboarding__eyebrow")], [
         html.text("Welcome to Roxy"),

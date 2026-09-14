@@ -7,6 +7,8 @@ not the other way around.
 ```text
 src/
 ├── api/
+│   ├── http/
+│   └── websocket/
 ├── app/
 ├── domain/
 ├── pages/
@@ -49,15 +51,16 @@ most reusable layer and should be easy to test as pure Gleam code.
 
 ### `src/api/`
 
-Network boundary:
+Network boundary. Transport-specific code is split by protocol:
 
-- HTTP requests;
-- request and response DTOs;
-- JSON encoders and decoders;
-- mapping transport errors into application-facing results.
+- `src/api/http/` — HTTP requests, request/response DTOs, JSON encoders and
+  decoders, and HTTP error mapping;
+- `src/api/websocket/` — WebSocket connection lifecycle, incoming/outgoing
+  messages, reconnect policy, and WebSocket protocol mapping.
 
-API modules may depend on transport libraries and domain modules, but domain
-modules must not depend on `api/`.
+Both transport directories may depend on domain modules, but domain modules
+must not depend on `api/`. HTTP and WebSocket code should not be mixed unless a
+shared application-level adapter is genuinely needed.
 
 ### `src/pages/`
 

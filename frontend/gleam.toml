@@ -7,7 +7,7 @@ description = "Roxy UI on Lustre"
 [dependencies]
 gleam_stdlib = ">= 1.0.0 and < 2.0.0"
 lustre = ">= 5.7.1 and < 6.0.0"
-rsvp = ">= 2.0.0 and < 3.0.0"
+
 gleam_json = ">= 3.1.0 and < 4.0.0"
 gleam_http = ">= 4.4.0 and < 5.0.0"
 shared = { path = "../shared" }
@@ -28,3 +28,12 @@ proxy = { from = "/api", to = "http://backend:8080/api" }
 [tools.lustre.build]
 outdir = "dist"
 minify = true
+
+[html]
+title = "Roxy"
+stylesheets = [
+  { href = "/ui/styles/reset.css" },
+  { href = "/ui/styles/tokens.css" },
+  { href = "/ui/styles/theme.css" },
+  { href = "/ui/styles/globals.css" },
+]

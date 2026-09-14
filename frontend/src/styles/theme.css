@@ -1,0 +1,19 @@
+:root {
+  color-scheme: dark;
+
+  --color-bg: #0c0d0e;
+  --color-surface: #151719;
+  --color-surface-hover: #1c1f22;
+
+  --color-text: #f2f3f3;
+  --color-text-muted: #9da3a8;
+
+  --color-border: #2a2e32;
+
+  --color-accent: #6ea8fe;
+  --color-accent-hover: #8bb9ff;
+
+  --color-danger: #ef6b73;
+
+  --color-focus: #8bb9ff;
+}

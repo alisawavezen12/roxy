@@ -1,0 +1,130 @@
+.identity-panel {
+  width: min(100%, 15.75rem);
+  display: flex;
+  flex-direction: column;
+  justify-self: center;
+  text-align: left;
+}
+
+.identity-panel__identity {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.identity-panel__avatar {
+  width: 12rem;
+  height: 12rem;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  margin-bottom: var(--space-4);
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--button-primary-text);
+  font-size: 4.5rem;
+  font-weight: var(--button-font-weight);
+}
+
+.identity-panel__name-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.identity-panel__name-row h2 {
+  margin: 0;
+  color: var(--color-text);
+  font-size: calc(var(--font-size-xl) + 0.125rem);
+}
+
+.identity-panel__status {
+  display: inline-block;
+  color: var(--color-accent);
+  font-size: var(--font-size-lg);
+  cursor: help;
+  animation: identity-panel-status-pulse 1.8s ease-in-out infinite;
+}
+
+.identity-panel__handle {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+.identity-panel__meta {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.identity-panel__meta p {
+  margin: 0;
+}
+
+.identity-panel__bio {
+  margin: var(--space-6) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+  line-height: 1.6;
+}
+
+.identity-panel__stats {
+  display: flex;
+  gap: var(--space-4);
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  font-weight: var(--button-font-weight);
+}
+
+.identity-panel__stars {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text);
+}
+
+.identity-panel__star-icon {
+  width: 1.15em;
+  height: 1.15em;
+  display: block;
+  flex: 0 0 auto;
+  background-color: var(--color-accent);
+  -webkit-mask: url("/svg/star-filled.svg") center / contain no-repeat;
+  mask: url("/svg/star-filled.svg") center / contain no-repeat;
+}
+
+
+.identity-panel__links {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.identity-panel__links a {
+  width: fit-content;
+  color: var(--color-text);
+  font-size: var(--font-size-md);
+  text-decoration: none;
+  transition: color var(--transition-fast), text-decoration-color var(--transition-fast);
+}
+
+.identity-panel__links a:hover {
+  color: var(--color-accent-hover);
+  text-decoration-color: var(--color-accent-hover);
+}
+
+@keyframes identity-panel-status-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}

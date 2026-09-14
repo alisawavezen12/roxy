@@ -30,13 +30,15 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
 
+  /* Layout */
+  --layout-top-padding: 6rem;
+  --layout-side-padding: 12rem;
+  --content-width: 72rem;
+
   /* Radius */
   --radius-sm: 0.375rem;
   --radius-md: 0.625rem;
   --radius-lg: 1rem;
-
-  /* Layout */
-  --content-width: 72rem;
 
   /* Motion */
   --transition-fast: 120ms ease;

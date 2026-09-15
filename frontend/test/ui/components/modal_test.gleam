@@ -7,10 +7,12 @@ pub fn modal_config_keeps_accessible_close_contract_test() {
       title: "Вход",
       close_label: "Закрыть окно",
       on_close: "close",
+      on_ignore: "ignore",
       children: [],
     )
 
   config.title |> should.equal("Вход")
   config.close_label |> should.equal("Закрыть окно")
   config.on_close |> should.equal("close")
+  config.on_ignore |> should.equal("ignore")
 }

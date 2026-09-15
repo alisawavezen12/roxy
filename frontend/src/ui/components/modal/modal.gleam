@@ -8,6 +8,7 @@ pub type Config(message) {
     title: String,
     close_label: String,
     on_close: message,
+    on_ignore: message,
     children: List(Element(message)),
   )
 }
@@ -21,7 +22,18 @@ pub fn stylesheet() -> Element(message) {
 
 pub fn view(config: Config(message)) -> Element(message) {
   html.div(
-    [attribute.class("modal"), attribute.attribute("role", "presentation")],
+    [
+      attribute.class("modal"),
+      attribute.attribute("role", "presentation"),
+      attribute.attribute("tabindex", "-1"),
+      attribute.attribute("autofocus", "true"),
+      event.on_keydown(fn(key) {
+        case key {
+          "Escape" -> config.on_close
+          _ -> config.on_ignore
+        }
+      }),
+    ],
     [
       html.button(
         [

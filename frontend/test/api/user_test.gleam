@@ -7,7 +7,8 @@ import shared/http_status as status
 const body = "{\"user\":{\"id\":\"user-1\",\"email\":\"person@example.com\",\"username\":\"sentry\",\"firstName\":null,\"lastName\":null,\"avatarUrl\":\"https://cdn.example/avatar.png\",\"bio\":\"Building things\"}}"
 
 pub fn current_user_decodes_full_profile_test() {
-  let assert auth.SignedIn(current_user) = auth.decode_current_user(status.ok, body)
+  let assert auth.SignedIn(current_user) =
+    auth.decode_current_user(status.ok, body)
 
   current_user.id |> should.equal("user-1")
   current_user.username |> should.equal(option.Some("sentry"))

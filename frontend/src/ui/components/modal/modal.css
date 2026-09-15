@@ -26,24 +26,29 @@
 }
 
 .modal__header {
+  position: relative;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: var(--space-4);
-  padding: var(--space-5) var(--space-5) var(--space-3);
+  padding: var(--space-6) var(--space-8) var(--space-3);
+  text-align: center;
 }
 
 .modal__header h2 {
   margin: 0;
+  text-align: center;
   color: var(--color-text);
   font-size: var(--font-size-xl);
 }
 
 .modal__close {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
   width: 2.25rem;
   height: 2.25rem;
   display: grid;
-  flex: 0 0 auto;
   place-items: center;
   padding: 0;
   border: 0;
@@ -68,5 +73,9 @@
 }
 
 .modal__body {
-  padding: var(--space-3) var(--space-5) var(--space-5);
+  display: grid;
+  justify-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-8) var(--space-8);
+  text-align: center;
 }

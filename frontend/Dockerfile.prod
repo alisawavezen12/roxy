@@ -1,5 +1,6 @@
 ARG GLEAM_VERSION=v1.18.1
 ARG BUN_VERSION=1.2.22
+ARG API_ORIGIN
 FROM oven/bun:${BUN_VERSION}-alpine AS bun
 
 FROM ghcr.io/gleam-lang/gleam:${GLEAM_VERSION}-erlang-alpine AS frontend-build
@@ -21,7 +22,8 @@ COPY ./frontend/scripts ./frontend/scripts
 RUN sed -i 's/\r$//' ./frontend/scripts/*.sh \
   && chmod +x ./frontend/scripts/*.sh
 
-RUN cd /build/frontend \
+RUN sed -i "s|http://localhost:8080|${API_ORIGIN}|g" ./frontend/src/config/runtime.mjs \
+  && cd /build/frontend \
   && gleam run -m lustre/dev build --minify --outdir=dist \
   && sh scripts/sync_css.sh src dist \
   && rm -f dist/.gitkeep

@@ -19,6 +19,21 @@ src/
 └── frontend.gleam
 ```
 
+## Configuration
+
+The frontend uses compile-time configuration. The browser never reads `.env`
+files directly.
+
+`API_ORIGIN` is the only backend value exposed to the frontend and is used for
+`/auth/me` and `/auth/sso`:
+
+- development: the source constant is `http://localhost:8080`;
+- production: pass `--build-arg API_ORIGIN=https://api.example.com` to the
+  frontend production build.
+
+Backend-only values such as `DOBRUNIA_AUTH_CLIENT_ID` and
+`AUTH_TOKEN_ENCRYPTION_KEY` must never be copied into frontend configuration.
+
 ## Layer responsibilities
 
 ### `src/frontend.gleam`

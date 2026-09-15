@@ -30,6 +30,18 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml run --rm backend 
 
 Migrations хранятся в `backend/migrations/`, именуются вроде `0001_create_posts.sql` и не запускаются автоматически при старте backend.
 
+### Dobrunia Auth SSO
+
+Backend реализует OAuth 2.0 Authorization Code flow. Зарегистрируйте callback URL `http://localhost:8080/auth/sso/callback` для DEV или `{PUBLIC_BASE_URL}/auth/sso/callback` для production и задайте:
+
+```env
+DOBRUNIA_AUTH_CLIENT_ID=your-client-slug-or-uuid
+# Отдельный секрет шифрования токенов, минимум 32 символа
+AUTH_TOKEN_ENCRYPTION_KEY=replace-with-a-random-secret
+```
+
+Начало входа: `GET /auth/sso`. Callback обрабатывается backend. Dobrunia-токены не выдаются браузеру: они хранятся в PostgreSQL с AES-256-GCM, а клиент получает только `HttpOnly` cookie локальной Roxy-сессии. Ротация внешнего refresh token выполняется через `POST /auth/sso/refresh`, а выход из обеих сессий — через `POST /auth/sso/logout`. Оба endpoint используют credentialed cookie и защищены origin-проверкой.
+
 ### Backend-тесты с PostgreSQL
 
 Запустить полный backend test suite внутри development-контейнера, включая integration-тест pool:
@@ -79,6 +91,9 @@ docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build --no-d
 - backend: http://localhost:8080
 - MinIO API: http://localhost:9000
 - MinIO Console: http://localhost:9001
+- PostgreSQL (DEV only): `127.0.0.1:5433`
+
+Для подключения через pgAdmin и описания таблиц см. [`backend/docs/database.md`](backend/docs/database.md).
 
 Создать локальный bucket `roxy` при первом подключении файлового хранилища:
 

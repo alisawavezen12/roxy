@@ -6,6 +6,8 @@ import gleam/http
 import gleam/list
 import gleam/option
 
+import transport/http/handlers/auth/me
+import transport/http/handlers/auth/sso
 import transport/http/handlers/health
 import transport/http/handlers/readiness
 import transport/http/middleware/cache_policy
@@ -29,6 +31,7 @@ type Route {
     body: request_body.Contract,
     access: access.Access,
     handler: fn(
+      wisp.Request,
       dependencies.Dependencies,
       transport_context.TransportContext,
       request_body.ParsedBody,
@@ -37,6 +40,41 @@ type Route {
 }
 
 const routes = [
+  Route(
+    path: "/auth/me",
+    methods: [http.Get],
+    body: request_body.NoBody,
+    access: access.Authenticated,
+    handler: me_route,
+  ),
+  Route(
+    path: "/auth/sso",
+    methods: [http.Get],
+    body: request_body.NoBody,
+    access: access.Public,
+    handler: sso_start_route,
+  ),
+  Route(
+    path: "/auth/sso/callback",
+    methods: [http.Get],
+    body: request_body.NoBody,
+    access: access.Public,
+    handler: sso_callback_route,
+  ),
+  Route(
+    path: "/auth/sso/logout",
+    methods: [http.Post],
+    body: request_body.NoBody,
+    access: access.Public,
+    handler: sso_logout_route,
+  ),
+  Route(
+    path: "/auth/sso/refresh",
+    methods: [http.Post],
+    body: request_body.NoBody,
+    access: access.Authenticated,
+    handler: sso_refresh_route,
+  ),
   Route(
     path: "/health",
     methods: [http.Get],
@@ -129,7 +167,53 @@ fn authorize(
   }
 }
 
+fn me_route(
+  _request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  me.handle(dependencies, context)
+}
+
+fn sso_start_route(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  sso.start(request, dependencies, context)
+}
+
+fn sso_callback_route(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  sso.callback(request, dependencies, context)
+}
+
+fn sso_logout_route(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  sso.logout(request, dependencies, context)
+}
+
+fn sso_refresh_route(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  sso.refresh(request, dependencies, context)
+}
+
 fn health_route(
+  _request: wisp.Request,
   dependencies: dependencies.Dependencies,
   context: transport_context.TransportContext,
   _body: request_body.ParsedBody,
@@ -138,6 +222,7 @@ fn health_route(
 }
 
 fn readiness_route(
+  _request: wisp.Request,
   dependencies: dependencies.Dependencies,
   context: transport_context.TransportContext,
   _body: request_body.ParsedBody,
@@ -153,7 +238,7 @@ fn check_body(
 ) -> Result(wisp.Response, errors.HttpError) {
   let response =
     request_body.parse(request, route.body, context, fn(body) {
-      route.handler(dependencies, context, body)
+      route.handler(request, dependencies, context, body)
     })
   Ok(response)
 }

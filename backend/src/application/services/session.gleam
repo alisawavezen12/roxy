@@ -13,6 +13,14 @@ pub type VerificationError {
   Database(pog.QueryError)
 }
 
+pub type ProviderCredentials {
+  ProviderCredentials(
+    access_token: BitArray,
+    refresh_token: BitArray,
+    provider_session_id: String,
+  )
+}
+
 pub fn create(
   connection: pog.Connection,
   user_id: String,
@@ -44,6 +52,83 @@ pub fn create_with_permissions(
     |> pog.timeout(timeout)
   case pog.execute(query, connection) {
     Ok(_) -> Ok(token)
+    Error(error) -> Error(error)
+  }
+}
+
+pub fn create_with_provider(
+  connection: pog.Connection,
+  user_id: String,
+  provider_session_id: String,
+  encrypted_access_token: BitArray,
+  encrypted_refresh_token: BitArray,
+  ttl_seconds: Int,
+  timeout: Int,
+) -> Result(String, pog.QueryError) {
+  let token =
+    crypto.strong_random_bytes(32)
+    |> bit_array.base64_url_encode(False)
+  let expires_at = now_seconds() + ttl_seconds
+  let query =
+    pog.query(
+      "insert into sessions (token_hash, user_id, permissions, expires_at, revoked, provider_session_id, provider_access_token, provider_refresh_token) values ($1, $2, '{}', to_timestamp($3::double precision), false, $4, $5, $6)",
+    )
+    |> pog.parameter(pog.bytea(token_hash(token)))
+    |> pog.parameter(pog.text(user_id))
+    |> pog.parameter(pog.int(expires_at))
+    |> pog.parameter(pog.text(provider_session_id))
+    |> pog.parameter(pog.bytea(encrypted_access_token))
+    |> pog.parameter(pog.bytea(encrypted_refresh_token))
+    |> pog.timeout(timeout)
+  case pog.execute(query, connection) {
+    Ok(_) -> Ok(token)
+    Error(error) -> Error(error)
+  }
+}
+
+pub fn provider_credentials(
+  connection: pog.Connection,
+  token: String,
+  for_update: Bool,
+  timeout: Int,
+) -> Result(ProviderCredentials, VerificationError) {
+  let locking = case for_update {
+    True -> " for update"
+    False -> ""
+  }
+  let query =
+    pog.query(
+      "select provider_access_token, provider_refresh_token, provider_session_id from sessions where token_hash = $1 and revoked = false and expires_at > now() and provider_access_token is not null and provider_refresh_token is not null and provider_session_id is not null"
+      <> locking,
+    )
+    |> pog.parameter(pog.bytea(token_hash(token)))
+    |> pog.returning(provider_credentials_decoder())
+    |> pog.timeout(timeout)
+  case pog.execute(query, connection) {
+    Error(error) -> Error(Database(error))
+    Ok(pog.Returned(rows: [credentials, ..], ..)) -> Ok(credentials)
+    Ok(_) -> Error(InvalidToken)
+  }
+}
+
+pub fn update_provider_tokens(
+  connection: pog.Connection,
+  token: String,
+  encrypted_access_token: BitArray,
+  encrypted_refresh_token: BitArray,
+  timeout: Int,
+) -> Result(Nil, pog.QueryError) {
+  let query =
+    pog.query(
+      "update sessions set provider_access_token = $2, provider_refresh_token = $3 where token_hash = $1 and revoked = false and expires_at > now()",
+    )
+    |> pog.parameter(pog.bytea(token_hash(token)))
+    |> pog.parameter(pog.bytea(encrypted_access_token))
+    |> pog.parameter(pog.bytea(encrypted_refresh_token))
+    |> pog.timeout(timeout)
+  case pog.execute(query, connection) {
+    Ok(pog.Returned(count: 1, ..)) -> Ok(Nil)
+    Ok(_) -> Error(pog.UnexpectedResultType([]))
     Error(error) -> Error(error)
   }
 }
@@ -101,6 +186,20 @@ pub fn now_seconds() -> Int {
   let current = timestamp.system_time()
   let #(seconds, _) = timestamp.to_unix_seconds_and_nanoseconds(current)
   seconds
+}
+
+fn provider_credentials_decoder() -> decode.Decoder(ProviderCredentials) {
+  decode.subfield([0], decode.bit_array, fn(access_token) {
+    decode.subfield([1], decode.bit_array, fn(refresh_token) {
+      decode.subfield([2], decode.string, fn(provider_session_id) {
+        decode.success(ProviderCredentials(
+          access_token:,
+          refresh_token:,
+          provider_session_id:,
+        ))
+      })
+    })
+  })
 }
 
 fn session_decoder() -> decode.Decoder(#(String, List(String), Int, Bool)) {

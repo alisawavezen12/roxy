@@ -12,6 +12,7 @@ pub fn development_uses_defaults_test() {
   envoy.set("DATABASE_URL", "postgres://production/database")
   envoy.set("SECRET_KEY_BASE", "production-secret")
   envoy.unset("CORS_ALLOWED_ORIGINS")
+  configure_auth()
 
   let assert Ok(config) = app.load()
 
@@ -25,7 +26,10 @@ pub fn development_uses_defaults_test() {
   |> should.equal(defaults.secret_key_base)
 
   config.origins.allowed
-  |> should.equal([defaults.cors_allowed_origins])
+  |> should.equal([
+    "http://localhost:1234",
+    "http://127.0.0.1:1234",
+  ])
   config.session.ttl_seconds
   |> should.equal(session.default_ttl_seconds)
   config.session.cookie_secure
@@ -53,6 +57,8 @@ pub fn production_reads_environment_test() {
   envoy.set("PUBLIC_BASE_URL", "https://app.example.com")
   envoy.set("TRUSTED_PROXY_IPS", "10.0.0.2")
   envoy.set("TRUSTED_INTERNAL_IPS", "172.18.0.2")
+  envoy.set("FRONTEND_URL", "https://app.example.com")
+  configure_auth()
 
   let assert Ok(config) = app.load()
 
@@ -131,6 +137,14 @@ pub fn production_rejects_empty_port_test() {
   )
 }
 
+fn configure_auth() -> Nil {
+  envoy.set("DOBRUNIA_AUTH_CLIENT_ID", "roxy-web")
+  envoy.set(
+    "AUTH_TOKEN_ENCRYPTION_KEY",
+    "test-token-encryption-key-with-sufficient-length",
+  )
+}
+
 fn configure_production() -> Nil {
   envoy.set("APP_ENV", "production")
   envoy.set("PUBLIC_BASE_URL", "https://app.example.com")
@@ -148,4 +162,5 @@ fn configure_production() -> Nil {
     "SECRET_KEY_BASE",
     "production-secret-key-base-that-is-long-enough-for-wisp-xxxxxxxxxxxx",
   )
+  configure_auth()
 }

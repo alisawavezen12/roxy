@@ -18,6 +18,12 @@ pub const public_base_url_invalid = "PUBLIC_BASE_URL must be an absolute http(s)
 
 pub const trusted_proxy_ips_empty = "TRUSTED_PROXY_IPS must not contain empty entries"
 
+pub const dobrunia_auth_client_id_invalid = "DOBRUNIA_AUTH_CLIENT_ID must be a non-empty value up to 255 characters"
+
+pub const frontend_url_invalid = "FRONTEND_URL must be an HTTPS origin in production (loopback HTTP is allowed in development)"
+
+pub const auth_token_encryption_key_too_short = "AUTH_TOKEN_ENCRYPTION_KEY must be at least 32 characters long"
+
 pub const database_lock_timeout_exceeded = "DATABASE_LOCK_TIMEOUT_MS must not exceed DATABASE_STATEMENT_TIMEOUT_MS"
 
 pub const database_statement_timeout_exceeded = "DATABASE_STATEMENT_TIMEOUT_MS must not exceed DATABASE_TRANSACTION_TIMEOUT_MS"
@@ -30,6 +36,10 @@ pub const postgres_connection_failed = "PostgreSQL connection failed"
 
 pub fn invalid_app_environment(value: String) -> String {
   "APP_ENV must be either development or production, got: " <> value
+}
+
+pub fn required(name: String) -> String {
+  name <> " environment variable is required"
 }
 
 pub fn required_in_production(name: String) -> String {

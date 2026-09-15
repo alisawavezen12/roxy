@@ -4,6 +4,8 @@ services:
     build:
       context: .
       dockerfile: frontend/Dockerfile.prod
+      args:
+        API_ORIGIN: ${API_ORIGIN:?API_ORIGIN must be set for production frontend}
     init: true
     ports:
       - "127.0.0.1:8081:8080"

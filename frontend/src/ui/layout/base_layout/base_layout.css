@@ -1,4 +1,23 @@
 .layout {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
   padding: var(--layout-top-padding) var(--layout-side-padding) var(--space-8);
+}
+
+.layout__content {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+.layout__content > * {
+  flex: 1;
+}
+
+@media (max-width: 700px) {
+  .layout {
+    padding-right: var(--space-4);
+    padding-left: var(--space-4);
+  }
 }

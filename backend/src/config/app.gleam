@@ -1,4 +1,5 @@
 import application/messages
+import config/auth
 import config/defaults
 import config/environment
 import config/origins
@@ -17,6 +18,7 @@ pub type AppConfig {
     environment: environment.Environment,
     secret_key_base: String,
     origins: origins.OriginsConfig,
+    auth: auth.AuthConfig,
     session: session.SessionConfig,
     transport: transport.TransportConfig,
     postgres: db_config.PostgresConfig,
@@ -32,6 +34,10 @@ pub fn load() -> Result(AppConfig, String) {
   use origins_config <- result.try(origins.load(environment))
   use session_config <- result.try(session.load(environment))
   use transport_config <- result.try(transport.load(environment))
+  use auth_config <- result.try(auth.load(
+    environment,
+    transport_config.public_base_url,
+  ))
   use postgres_config <- result.try(db_config.load(environment))
 
   case string.length(secret_key_base) >= 64 {
@@ -42,6 +48,7 @@ pub fn load() -> Result(AppConfig, String) {
         environment:,
         secret_key_base:,
         origins: origins_config,
+        auth: auth_config,
         session: session_config,
         transport: transport_config,
         postgres: postgres_config,

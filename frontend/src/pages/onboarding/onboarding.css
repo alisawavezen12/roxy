@@ -1,5 +1,5 @@
 .onboarding {
-  min-height: calc(100vh - (var(--space-8) * 2));
+  width: 100%;
   display: grid;
   place-items: center;
 }

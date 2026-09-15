@@ -29,6 +29,18 @@ pub fn migration_names_are_sorted_and_read_test() {
   let _ = simplifile.delete(directory)
 }
 
+pub fn migration_file_can_contain_multiple_statements_test() {
+  let directory = "test_tmp_migrations_multiple_statements"
+  let assert Ok(Nil) = migrations.ensure_directory(directory)
+  let sql = "create table first ();\ncreate table second ();"
+  let assert Ok(Nil) = simplifile.write(directory <> "/0001_tables.sql", sql)
+
+  let assert Ok([migration]) = migrations.load_migrations(directory)
+  migration.sql |> should.equal(sql)
+
+  let _ = simplifile.delete(directory)
+}
+
 pub fn invalid_migration_filename_is_rejected_test() {
   let directory = "test_tmp_migrations_invalid"
   let assert Ok(Nil) = migrations.ensure_directory(directory)

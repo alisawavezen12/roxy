@@ -3,12 +3,44 @@
   grid-template-columns: minmax(0, 1.5fr) minmax(16rem, 0.75fr);
   gap: var(--space-8);
   width: 100%;
-  min-height: calc(100vh - var(--layout-top-padding) - var(--space-8));
+
   align-items: start;
 }
 
 .user-page__slot {
   min-height: 1px;
+}
+
+.user-page__current-user {
+  width: min(100%, 30rem);
+  padding: var(--space-5);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.user-page__eyebrow,
+.user-page__auth-status {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.user-page__current-user-name {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text);
+  font-size: var(--font-size-xl);
+  font-weight: var(--button-font-weight);
+}
+
+.user-page__auth-copy {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.modal .button {
+  width: 100%;
 }
 
 @media (max-width: 700px) {

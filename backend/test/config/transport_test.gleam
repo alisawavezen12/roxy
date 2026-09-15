@@ -1,9 +1,23 @@
 import application/messages
 import config/environment
+import config/origins
 import config/transport
 import envoy
 import gleam/option
 import gleeunit/should
+
+pub fn development_allows_both_frontend_loopback_origins_test() {
+  envoy.unset("CORS_ALLOWED_ORIGINS")
+  origins.load(environment.Development)
+  |> should.equal(
+    Ok(
+      origins.OriginsConfig(allowed: [
+        "http://localhost:1234",
+        "http://127.0.0.1:1234",
+      ]),
+    ),
+  )
+}
 
 pub fn development_allows_http_base_url_test() {
   envoy.set("APP_ENV", "development")

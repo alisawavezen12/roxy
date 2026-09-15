@@ -143,8 +143,8 @@ fn apply_pending(
         Ok(False) -> {
           let result =
             pog.transaction(postgres, fn(connection) {
-              case pool.execute(connection, migration.sql, timeout) {
-                Ok(_) ->
+              case execute_script(connection, migration.sql, timeout) {
+                Ok(Nil) ->
                   case
                     pool.execute(
                       connection,
@@ -167,6 +167,33 @@ fn apply_pending(
   }
 }
 
+fn execute_script(
+  connection: pog.Connection,
+  sql: String,
+  timeout: Int,
+) -> Result(Nil, pog.QueryError) {
+  let statements =
+    sql
+    |> string.split(";")
+    |> list.map(string.trim)
+    |> list.filter(fn(statement) { statement != "" })
+  execute_statements(connection, statements, timeout)
+}
+
+fn execute_statements(
+  connection: pog.Connection,
+  statements: List(String),
+  timeout: Int,
+) -> Result(Nil, pog.QueryError) {
+  case statements {
+    [] -> Ok(Nil)
+    [statement, ..rest] -> {
+      use _ <- result.try(pool.execute(connection, statement, timeout))
+      execute_statements(connection, rest, timeout)
+    }
+  }
+}
+
 fn applied(
   postgres: pog.Connection,
   timeout: Int,
@@ -175,7 +202,7 @@ fn applied(
   let query =
     pog.query("select version from schema_migrations where version = $1")
     |> pog.parameter(pog.text(version))
-    |> pog.returning(decode.string)
+    |> pog.returning(decode.subfield([0], decode.string, decode.success))
     |> pog.timeout(timeout)
   case pog.execute(query, postgres) {
     Ok(result) -> Ok(result.rows != [])

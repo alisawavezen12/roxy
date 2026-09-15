@@ -1,6 +1,7 @@
 import application/access
 import application/dependencies as app_dependencies
 import application/services/session as session_service
+
 import config/session as session_config
 import gleam/http/cookie
 import gleam/http/request
@@ -12,6 +13,7 @@ import logging
 import observability/logger
 import observability/metrics
 import pog
+
 import transport/transport_context
 import wisp
 
@@ -42,6 +44,13 @@ pub fn issue_with_permissions(
     config.postgres.query_timeout,
   ))
   Ok(set_cookie(response, http_request, token, config.session))
+}
+
+pub fn token(http_request: request.Request(body)) -> option.Option(String) {
+  http_request
+  |> request.get_cookies
+  |> list.key_find(cookie_name)
+  |> option.from_result
 }
 
 pub fn revoke(

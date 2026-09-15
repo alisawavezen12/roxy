@@ -1,5 +1,6 @@
 import application/dependencies
 import config/app
+import config/auth
 import config/environment
 import config/origins
 import config/session
@@ -176,6 +177,12 @@ fn test_dependencies(port: Int) -> dependencies.Dependencies {
       environment: environment.Development,
       secret_key_base: "test-secret-key-base-that-is-long-enough-for-wisp",
       origins: origins.OriginsConfig(allowed: [origin]),
+      auth: auth.AuthConfig(
+        client_id: "test-client",
+        redirect_uri: "http://localhost:8080/auth/sso/callback",
+        frontend_url: "http://localhost:1234",
+        token_encryption_key: "test-token-encryption-key-with-sufficient-length",
+      ),
       session: session.SessionConfig(ttl_seconds: 86_400, cookie_secure: False),
       transport: transport.TransportConfig(
         public_base_url: "http://localhost:8080",

@@ -3,7 +3,7 @@
   display: grid;
   grid-template-columns: 5rem minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  gap: var(--space-8);
+  gap: 0;
   padding: var(--layout-top-padding) var(--layout-side-padding) var(--space-8);
 }
 
@@ -13,14 +13,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 2px solid var(--color-surface);
   border-radius: var(--radius-lg) 0 0 var(--radius-lg);
-  background: var(--color-accent-soft);
 }
 
 .layout__content {
   min-width: 0;
   min-height: 0;
   display: flex;
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  background: var(--color-surface);
+  overflow: hidden;
 }
 
 .layout__content > * {

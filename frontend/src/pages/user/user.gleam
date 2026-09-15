@@ -33,7 +33,7 @@ fn profile(state: UserPageState) -> List(Element(Message)) {
   case state {
     UserLoading -> [status("Loading user…")]
     UserLoaded(profile) -> [identity_panel.view(profile)]
-    UserNotFound -> [empty_state("user.svg", "This user does not exist.")]
+    UserNotFound -> [empty_profile_state()]
     UserLoadFailed -> [status("Unable to load this user.")]
   }
 }
@@ -49,6 +49,12 @@ fn empty_state(icon: String, message: String) -> Element(Message) {
       [],
     ),
     html.p([], [html.text(message)]),
+  ])
+}
+
+fn empty_profile_state() -> Element(Message) {
+  html.div([attribute.class("user-page__profile-empty")], [
+    empty_state("user.svg", "This user does not exist."),
   ])
 }
 

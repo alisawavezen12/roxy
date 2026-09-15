@@ -19,8 +19,9 @@ import observability/logger
 import pog
 import security/token_cipher
 import shared/api/error as api_error
+import shared/http_status as status
+import shared/user as shared_user
 import transport/http/protocol/api_errors
-import transport/http/protocol/status
 import transport/session
 import transport/transport_context
 import wisp
@@ -199,7 +200,7 @@ fn persist_login(
   _context: transport_context.TransportContext,
   base_response: wisp.Response,
   tokens: dobrunia.Tokens,
-  authenticated_user: user.User,
+  authenticated_user: shared_user.User,
   return_to: String,
 ) -> wisp.Response {
   let config = dependencies.config
@@ -207,7 +208,7 @@ fn persist_login(
   let encryption_key = token_cipher.derive_key(token_encryption_key)
   let persisted =
     pog.transaction(dependencies.postgres, fn(connection) {
-      use user_id <- result.try(user.upsert(
+      use user_id <- result.try(user.upsert_identity(
         connection,
         authenticated_user,
         config.postgres.query_timeout,

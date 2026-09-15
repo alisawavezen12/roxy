@@ -5,9 +5,9 @@ import gleam/string
 import gleeunit/should
 
 import shared/api/error as api_error
+import shared/http_status as status
 import transport/http/middleware/error_handler
 import transport/http/protocol/http_errors
-import transport/http/protocol/status
 import transport/transport_context
 import wisp
 

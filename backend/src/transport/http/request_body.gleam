@@ -3,9 +3,9 @@ import gleam/dynamic/decode
 import gleam/http/request as http_request
 import gleam/json
 import gleam/string
+import shared/http_status as status
 import transport/http/middleware/error_handler
 import transport/http/protocol/http_errors
-import transport/http/protocol/status
 import transport/transport_context
 import wisp
 

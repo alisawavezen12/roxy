@@ -1,52 +1,52 @@
 import app/message.{type Message}
+import gleam/option
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
+import shared/user.{type User}
 
-pub fn view(user_id: String) -> Element(Message) {
+pub fn view(profile: User) -> Element(Message) {
   html.aside([attribute.class("identity-panel")], [
-    html.section([attribute.class("identity-panel__identity")], [
-      html.div([attribute.class("identity-panel__avatar")], [html.text("M")]),
-      html.div([attribute.class("identity-panel__name-row")], [
-        html.h2([], [html.text("Maya Chen")]),
-        html.span(
-          [
-            attribute.class("identity-panel__status"),
-            attribute.title("building weird things"),
-          ],
-          [html.text("✦")],
-        ),
-      ]),
-      html.p([attribute.class("identity-panel__handle")], [
-        html.text("@" <> user_id),
-      ]),
+    avatar(profile),
+    html.h2([], [html.text(user.display_name(profile))]),
+    html.p([attribute.class("identity-panel__handle")], [
+      html.text(handle(profile)),
     ]),
-    html.section([attribute.class("identity-panel__meta")], [
-      html.p([], [html.text("Joined Sep 2026")]),
-      html.div([attribute.class("identity-panel__stats")], [
-        html.span([], [html.text("24 posts")]),
-        html.span([attribute.class("identity-panel__stars")], [
-          html.span(
-            [
-              attribute.class("identity-panel__star-icon"),
-              attribute.attribute("aria-hidden", "true"),
-            ],
-            [],
-          ),
-          html.text("42"),
-        ]),
-      ]),
-    ]),
-    html.p([attribute.class("identity-panel__bio")], [
-      html.text(
-        "Designer, maker, and curious human exploring better ways to work together.",
-      ),
-    ]),
-
-    html.nav([attribute.class("identity-panel__links")], [
-      html.a([attribute.href("#website")], [html.text("Website")]),
-      html.a([attribute.href("#github")], [html.text("GitHub")]),
-      html.a([attribute.href("#contact")], [html.text("Contact")]),
-    ]),
+    ..bio(profile)
   ])
+}
+
+pub fn avatar(profile: User) -> Element(message) {
+  case profile.avatar_url {
+    option.Some(url) if url != "" ->
+      html.img([
+        attribute.class("identity-panel__avatar"),
+        attribute.src(url),
+        attribute.alt(user.display_name(profile) <> " avatar"),
+      ])
+    _ ->
+      html.div(
+        [
+          attribute.class("identity-panel__avatar"),
+          attribute.attribute("aria-hidden", "true"),
+        ],
+        [html.text(user.avatar_letter(profile))],
+      )
+  }
+}
+
+fn bio(profile: User) -> List(Element(Message)) {
+  case profile.bio {
+    option.Some(bio) if bio != "" -> [
+      html.p([attribute.class("identity-panel__bio")], [html.text(bio)]),
+    ]
+    _ -> []
+  }
+}
+
+fn handle(profile: User) -> String {
+  case profile.username {
+    option.Some(username) if username != "" -> "@" <> username
+    _ -> profile.email
+  }
 }

@@ -7,7 +7,7 @@ import gleam/option
 import gleam/string
 import mist
 import shared/api/error as api_error
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/transport_context
 import transport/websocket/handshake/validation
 

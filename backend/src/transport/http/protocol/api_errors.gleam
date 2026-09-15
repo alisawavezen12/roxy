@@ -1,7 +1,7 @@
 import gleam/json
 import gleam/option
 import shared/api/error as api_error
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/transport_context
 import wisp
 

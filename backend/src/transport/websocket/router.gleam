@@ -10,7 +10,7 @@ import logging
 import mist
 import observability/logger
 import observability/metrics
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/session
 import transport/transport_context
 import transport/websocket/connection/context as connection_context

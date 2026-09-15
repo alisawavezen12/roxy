@@ -1,13 +1,15 @@
-import application/services/user
 import config/auth
 import gleam/dynamic/decode
 import gleam/http
 import gleam/http/request
 import gleam/httpc
 import gleam/json
-import gleam/option
+
+import shared/user.{type User}
+
 import gleam/result
 import gleam/uri
+import shared/http_status as status
 
 pub type Tokens {
   Tokens(
@@ -67,7 +69,7 @@ pub fn exchange_code(
   )
 }
 
-pub fn user(access_token: String) -> Result(user.User, Error) {
+pub fn user(access_token: String) -> Result(User, Error) {
   use http_request <- result.try(
     request.to(auth.provider_base_url <> "/auth/me")
     |> result.map_error(fn(_) { Configuration }),
@@ -77,9 +79,11 @@ pub fn user(access_token: String) -> Result(user.User, Error) {
     |> request.set_header("authorization", "Bearer " <> access_token)
     |> request.set_header("accept", "application/json")
   use response <- result.try(send(http_request))
-  case response.status >= 200 && response.status < 300 {
+  case
+    response.status >= status.ok && response.status < status.multiple_choices
+  {
     True ->
-      json.parse(response.body, profile_decoder())
+      json.parse(response.body, user_response_decoder())
       |> result.map_error(fn(_) { InvalidResponse })
     False -> Error(Rejected(response.status))
   }
@@ -108,7 +112,9 @@ pub fn logout(refresh_token: String) -> Result(Nil, Error) {
       |> json.to_string,
     )
   use response <- result.try(send(http_request))
-  case response.status >= 200 && response.status < 300 {
+  case
+    response.status >= status.ok && response.status < status.multiple_choices
+  {
     True -> Ok(Nil)
     False -> Error(Rejected(response.status))
   }
@@ -129,7 +135,9 @@ fn post(
     |> request.set_header("accept", "application/json")
     |> request.set_body(json.to_string(body))
   use response <- result.try(send(http_request))
-  case response.status >= 200 && response.status < 300 {
+  case
+    response.status >= status.ok && response.status < status.multiple_choices
+  {
     True ->
       json.parse(response.body, decoder)
       |> result.map_error(fn(_) { InvalidResponse })
@@ -150,8 +158,8 @@ pub fn decode_tokens(body: String) -> Result(Tokens, Nil) {
   |> result.map_error(fn(_) { Nil })
 }
 
-pub fn decode_user(body: String) -> Result(user.User, Nil) {
-  json.parse(body, profile_decoder())
+pub fn decode_user(body: String) -> Result(User, Nil) {
+  json.parse(body, user_response_decoder())
   |> result.map_error(fn(_) { Nil })
 }
 
@@ -173,41 +181,8 @@ fn token_pair_decoder() -> decode.Decoder(TokenPair) {
   decode.success(TokenPair(access_token:, refresh_token:))
 }
 
-fn user_decoder() -> decode.Decoder(user.User) {
-  use id <- decode.field("id", decode.string)
-  use email <- decode.field("email", decode.string)
-  use username <- decode.optional_field(
-    "username",
-    option.None,
-    decode.optional(decode.string),
-  )
-  use first_name <- decode.optional_field(
-    "firstName",
-    option.None,
-    decode.optional(decode.string),
-  )
-  use last_name <- decode.optional_field(
-    "lastName",
-    option.None,
-    decode.optional(decode.string),
-  )
-  use avatar_url <- decode.optional_field(
-    "avatarUrl",
-    option.None,
-    decode.optional(decode.string),
-  )
-  decode.success(user.User(
-    id:,
-    email:,
-    username:,
-    first_name:,
-    last_name:,
-    avatar_url:,
-  ))
-}
-
-fn profile_decoder() -> decode.Decoder(user.User) {
-  decode.field("user", user_decoder(), decode.success)
+fn user_response_decoder() -> decode.Decoder(User) {
+  decode.field("user", user.decoder(), decode.success)
 }
 
 fn session_decoder() -> decode.Decoder(String) {

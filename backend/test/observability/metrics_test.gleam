@@ -1,7 +1,7 @@
 import gleam/otp/static_supervisor as supervisor
 import gleeunit/should
 import observability/metrics
-import transport/http/protocol/status
+import shared/http_status as status
 
 pub fn metrics_count_http_statuses_and_latency_test() {
   let #(metrics, child) = metrics.new_child()

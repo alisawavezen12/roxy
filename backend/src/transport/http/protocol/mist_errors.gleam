@@ -2,7 +2,7 @@ import gleam/bytes_tree
 import gleam/http/response
 import mist
 import shared/api/error as api_error
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/protocol/messages
 import transport/transport_context
 

@@ -1,6 +1,6 @@
 import application/dependencies
+import shared/http_status as status
 import transport/http/protocol/responses
-import transport/http/protocol/status
 import transport/protocol/messages
 import transport/transport_context
 import wisp

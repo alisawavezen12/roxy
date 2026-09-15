@@ -27,8 +27,8 @@ import pog
 import ratelimit/limiter
 
 import shared/api/error as api_error
+import shared/http_status as status
 import transport/dispatcher
-import transport/http/protocol/status
 import transport/http/router as http_router
 import transport/websocket/client
 import wisp/wisp_mist

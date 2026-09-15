@@ -51,6 +51,7 @@ pub fn profile_response_decodes_username_and_avatar_test() {
   user.username |> should.equal(option.Some("sentry"))
   user.avatar_url
   |> should.equal(option.Some("https://cdn.example/avatar.png"))
+  user.bio |> should.equal(option.None)
 }
 
 pub fn refresh_response_decodes_rotated_pair_without_user_test() {

@@ -5,11 +5,13 @@ import gleam/http
 
 import gleam/list
 import gleam/option
+import gleam/string
 
 import transport/http/handlers/auth/me
 import transport/http/handlers/auth/sso
 import transport/http/handlers/health
 import transport/http/handlers/readiness
+import transport/http/handlers/user as user_handler
 import transport/http/middleware/cache_policy
 import transport/http/middleware/cors
 import transport/http/middleware/csrf
@@ -135,14 +137,21 @@ fn dispatch(
   dependencies: dependencies.Dependencies,
   context: transport_context.TransportContext,
 ) -> Result(wisp.Response, errors.HttpError) {
-  case find_route(request.path, routes) {
-    option.Some(route) -> {
-      case list.contains(route.methods, request.method) {
-        True -> authorize(route, request, dependencies, context)
-        False -> Error(errors.MethodNotAllowed(allowed_methods(route.methods)))
+  case user_id(request.path) {
+    option.Some(id)
+      if request.method == http.Get || request.method == http.Head
+    -> Ok(user_handler.handle(id, dependencies, context))
+    _ ->
+      case find_route(request.path, routes) {
+        option.Some(route) -> {
+          case list.contains(route.methods, request.method) {
+            True -> authorize(route, request, dependencies, context)
+            False ->
+              Error(errors.MethodNotAllowed(allowed_methods(route.methods)))
+          }
+        }
+        option.None -> Error(errors.NotFound)
       }
-    }
-    option.None -> Error(errors.NotFound)
   }
 }
 
@@ -241,6 +250,13 @@ fn check_body(
       route.handler(request, dependencies, context, body)
     })
   Ok(response)
+}
+
+fn user_id(path: String) -> option.Option(String) {
+  case string.split(path, "/") {
+    ["", "users", id] if id != "" -> option.Some(id)
+    _ -> option.None
+  }
 }
 
 fn allowed_methods(methods: List(http.Method)) -> List(http.Method) {

@@ -11,8 +11,8 @@ import gleam/otp/supervision
 import gleeunit/should
 import mist
 import shared/api/error as api_error
+import shared/http_status as status
 import transport/http/protocol/api_errors
-import transport/http/protocol/status
 import transport/transport_context
 import wisp
 import wisp/wisp_mist

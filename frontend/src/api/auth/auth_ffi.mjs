@@ -1,21 +1,9 @@
 import { API_ORIGIN } from "../../config/runtime.mjs";
 
-export function loadCurrentUser(dispatch) {
+export function loadCurrentUser(callback) {
   fetch(`${API_ORIGIN}/auth/me`, { credentials: "include" })
-    .then(async response => {
-      if (response.status === 401) return { status: "unauthenticated" };
-      if (!response.ok) return { status: "error" };
-
-      const payload = await response.json();
-      const name = payload?.user?.name;
-      return typeof name === "string" && name.trim() !== ""
-        ? { status: "authenticated", name }
-        : { status: "error" };
-    })
-    .catch(() => ({ status: "error" }))
-    .then(result => dispatch(
-      result.status === "authenticated" ? `authenticated:${result.name}` : result.status,
-    ));
+    .then(async response => callback(response.status, await response.text()))
+    .catch(() => callback(0, ""));
 }
 
 export function startSsoLogin() {

@@ -1,9 +1,10 @@
 import application/dependencies
-import gleam/dynamic/decode
-import gleam/json
+import application/services/user
 import gleam/option
-import pog
-import transport/http/protocol/status
+import shared/api/error as api_error
+import shared/http_status as status
+import transport/http/handlers/user as user_handler
+import transport/http/protocol/api_errors
 import transport/transport_context
 import wisp
 
@@ -12,39 +13,33 @@ pub fn handle(
   context: transport_context.TransportContext,
 ) -> wisp.Response {
   case transport_context.principal(context) {
-    option.None -> wisp.response(status.unauthorized)
+    option.None -> unauthorized(context)
     option.Some(principal) ->
       case
-        user_name(
+        user.find(
           dependencies.postgres,
           principal.user_id,
           dependencies.config.postgres.query_timeout,
         )
       {
-        Ok(name) ->
-          json.object([#("user", json.object([#("name", json.string(name))]))])
-          |> json.to_string
-          |> wisp.json_response(status.ok)
-        Error(_) -> wisp.response(status.internal_server_error)
+        Ok(option.Some(user)) -> user_handler.response(user)
+        Ok(option.None) -> unauthorized(context)
+        Error(_) ->
+          api_errors.response(
+            status.internal_server_error,
+            api_error.internal_error_code,
+            api_error.internal_error_message,
+            context,
+          )
       }
   }
 }
 
-fn user_name(
-  connection: pog.Connection,
-  user_id: String,
-  timeout: Int,
-) -> Result(String, pog.QueryError) {
-  let query =
-    pog.query(
-      "select coalesce(nullif(trim(concat_ws(' ', first_name, last_name)), ''), nullif(username, ''), email) from users where id = $1",
-    )
-    |> pog.parameter(pog.text(user_id))
-    |> pog.returning(decode.subfield([0], decode.string, decode.success))
-    |> pog.timeout(timeout)
-  case pog.execute(query, connection) {
-    Ok(pog.Returned(rows: [name, ..], ..)) -> Ok(name)
-    Ok(_) -> Error(pog.UnexpectedResultType([]))
-    Error(error) -> Error(error)
-  }
+fn unauthorized(context: transport_context.TransportContext) -> wisp.Response {
+  api_errors.response(
+    status.unauthorized,
+    api_error.unauthorized_code,
+    api_error.unauthorized_message,
+    context,
+  )
 }

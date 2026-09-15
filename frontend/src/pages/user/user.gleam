@@ -1,7 +1,10 @@
 import app/message.{type Message, CloseAuthModal, StartSsoLogin}
 import app/model.{
-  type AuthState, Authenticated, Checking, Unauthenticated, Unavailable,
+  type AuthState, type UserPageState, Authenticated, Checking, Unauthenticated,
+  Unavailable, UserLoadFailed, UserLoaded, UserLoading, UserNotFound,
 }
+import shared/user
+
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
@@ -10,7 +13,7 @@ import ui/components/button/button
 import ui/components/modal/modal
 
 pub fn view(
-  user_id: String,
+  profile_state: UserPageState,
   auth: AuthState,
   auth_modal_open: Bool,
 ) -> Element(Message) {
@@ -29,22 +32,22 @@ pub fn view(
     ]),
     button.stylesheet(),
     modal.stylesheet(),
-    html.div([attribute.class("user-page__slot")], left_content(auth)),
-    identity_panel.view(user_id),
+    html.aside([attribute.class("user-page__viewer")], viewer(auth)),
+    html.section([attribute.class("user-page__posts")], []),
+    html.section(
+      [attribute.class("user-page__profile")],
+      profile(profile_state),
+    ),
     ..modal_views
   ])
 }
 
-fn left_content(auth: AuthState) -> List(Element(Message)) {
+fn viewer(auth: AuthState) -> List(Element(Message)) {
   case auth {
-    Authenticated(name) -> [
-      html.section([attribute.class("user-page__current-user")], [
-        html.p([attribute.class("user-page__eyebrow")], [
-          html.text("Signed in as"),
-        ]),
-        html.p([attribute.class("user-page__current-user-name")], [
-          html.text(name),
-        ]),
+    Authenticated(current_user) -> [
+      identity_panel.avatar(current_user),
+      html.p([attribute.class("user-page__viewer-name")], [
+        html.text(user.display_name(current_user)),
       ]),
     ]
     Checking -> [
@@ -54,6 +57,19 @@ fn left_content(auth: AuthState) -> List(Element(Message)) {
     ]
     Unauthenticated | Unavailable -> []
   }
+}
+
+fn profile(state: UserPageState) -> List(Element(Message)) {
+  case state {
+    UserLoading -> [status("Loading user…")]
+    UserLoaded(profile) -> [identity_panel.view(profile)]
+    UserNotFound -> [status("This user does not exist.")]
+    UserLoadFailed -> [status("Unable to load this user.")]
+  }
+}
+
+fn status(message: String) -> Element(Message) {
+  html.p([attribute.class("user-page__status")], [html.text(message)])
 }
 
 fn auth_modal(auth: AuthState) -> Element(Message) {

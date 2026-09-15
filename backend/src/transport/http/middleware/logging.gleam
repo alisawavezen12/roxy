@@ -4,7 +4,7 @@ import gleam/time/timestamp
 import logging
 import observability/logger
 import observability/metrics
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/transport_context
 import wisp
 

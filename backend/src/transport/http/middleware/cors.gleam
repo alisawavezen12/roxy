@@ -5,9 +5,9 @@ import gleam/http/response as http_response
 import gleam/list
 import gleam/string
 import shared/api/error as api_error
+import shared/http_status as status
 import transport/http/protocol/api_errors
 import transport/http/protocol/cors as cors_policy
-import transport/http/protocol/status
 import transport/transport_context
 import wisp
 

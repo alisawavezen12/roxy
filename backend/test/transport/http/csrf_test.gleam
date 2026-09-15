@@ -5,9 +5,9 @@ import gleam/http/request
 import gleam/list
 import gleam/string
 import gleeunit/should
+import shared/http_status as status
 import transport/http/middleware/csrf
 import transport/http/protocol/http_errors
-import transport/http/protocol/status
 import transport/transport_context
 import wisp
 

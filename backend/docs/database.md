@@ -64,6 +64,7 @@ Local user profiles linked to Dobrunia Auth.
 | `username` | Optional Dobrunia username when provided by `/auth/me` |
 | `first_name`, `last_name` | Optional profile names |
 | `avatar_url` | Optional avatar URL |
+| `bio` | Optional Roxy-owned biography; it is not overwritten by SSO sync |
 | `created_at`, `updated_at` | Local timestamps |
 
 On each successful OAuth login, the backend requests Dobrunia `/auth/me`, then

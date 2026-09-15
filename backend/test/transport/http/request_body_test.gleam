@@ -4,7 +4,7 @@ import gleam/http/request
 import gleam/string
 import gleeunit/should
 import shared/api/error as api_error
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/http/request_body
 import transport/transport_context
 import wisp

@@ -1,7 +1,7 @@
 import gleam/erlang/process
 import gleam/otp/actor
 import gleam/otp/supervision
-import transport/http/protocol/status
+import shared/http_status as status
 
 const process_name = "roxy_metrics"
 

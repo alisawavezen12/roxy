@@ -22,7 +22,7 @@ import pog
 import ratelimit/limiter
 
 import shared/api/error as api_error
-import transport/http/protocol/status
+import shared/http_status as status
 import transport/http/router
 import wisp
 
@@ -234,6 +234,21 @@ pub fn cross_site_sso_logout_is_rejected_test() {
   let response = router.handle(request, test_dependencies())
 
   response.status |> should.equal(status.forbidden)
+}
+
+pub fn unknown_user_returns_server_error_without_database_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Get)
+    |> request.set_path("/users/missing")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status |> should.equal(status.internal_server_error)
 }
 
 pub fn unknown_route_returns_not_found_test() {

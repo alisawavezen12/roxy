@@ -2,7 +2,7 @@
   width: 100%;
   min-height: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
 }
 
@@ -15,6 +15,7 @@
 
 .user-info__empty {
   display: grid;
+  width: 100%;
   align-content: center;
   justify-items: center;
   gap: var(--space-3);

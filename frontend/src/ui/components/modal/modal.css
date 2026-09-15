@@ -29,23 +29,24 @@
   position: relative;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: var(--space-4);
-  padding: var(--space-6) var(--space-8) var(--space-3);
-  text-align: center;
+  padding: var(--space-5) var(--space-6);
+  text-align: left;
 }
 
 .modal__header h2 {
   margin: 0;
-  text-align: center;
+  text-align: left;
   color: var(--color-text);
   font-size: var(--font-size-xl);
 }
 
 .modal__close {
   position: absolute;
-  top: var(--space-3);
-  right: var(--space-3);
+  top: 50%;
+  right: var(--space-4);
+  transform: translateY(-50%);
   width: 2.25rem;
   height: 2.25rem;
   display: grid;
@@ -62,6 +63,7 @@
 .modal__close:focus-visible {
   background: var(--button-secondary-bg-hover);
   color: var(--color-text);
+  transform: translateY(-50%);
 }
 
 .modal__close span {

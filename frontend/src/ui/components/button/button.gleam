@@ -7,12 +7,14 @@ pub type Size {
   Small
   Medium
   Large
+  ExtraLarge
 }
 
 pub type Variant {
   Primary
   Secondary
   Danger
+  Icon(icon: String)
 }
 
 pub type Config(message) {
@@ -31,9 +33,10 @@ pub fn view(config: Config(message)) -> Element(message) {
     [
       attribute.class(class_name(config.size, config.variant)),
       attribute.type_("button"),
+      icon_label(config.variant, config.label),
       event.on_click(config.on_click),
     ],
-    [html.text(config.label)],
+    content(config),
   )
 }
 
@@ -46,6 +49,30 @@ fn size_name(size: Size) -> String {
     Small -> "sm"
     Medium -> "md"
     Large -> "lg"
+    ExtraLarge -> "xl"
+  }
+}
+
+fn icon_label(variant: Variant, label: String) -> attribute.Attribute(message) {
+  case variant {
+    Icon(_) -> attribute.attribute("aria-label", label)
+    _ -> attribute.attribute("aria-hidden", "false")
+  }
+}
+
+fn content(config: Config(message)) -> List(Element(message)) {
+  case config.variant {
+    Icon(icon) -> [
+      html.span(
+        [
+          attribute.class("button__icon"),
+          attribute.style("--button-icon", "url('/svg/" <> icon <> "')"),
+          attribute.attribute("aria-hidden", "true"),
+        ],
+        [],
+      ),
+    ]
+    _ -> [html.text(config.label)]
   }
 }
 
@@ -54,5 +81,6 @@ fn variant_name(variant: Variant) -> String {
     Primary -> "primary"
     Secondary -> "secondary"
     Danger -> "danger"
+    Icon(_) -> "icon"
   }
 }

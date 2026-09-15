@@ -1,6 +1,7 @@
 import api/auth/auth
 import app/message.{
-  type Message, CloseAuthModal, NoOp, OpenAuthModal, StartSsoLogin,
+  type Message, CloseAuthModal, CloseSettingsModal, NoOp, OpenAuthModal,
+  OpenSettingsModal, StartSsoLogin,
 }
 import app/model.{type AuthState, Authenticated, Checking, Unavailable}
 import gleam/option
@@ -32,10 +33,15 @@ pub fn stylesheet() -> Element(message) {
   ])
 }
 
-pub fn view(auth_state: AuthState, modal_open: Bool) -> Element(Message) {
+pub fn view(
+  auth_state: AuthState,
+  auth_modal_open: Bool,
+  settings_modal_open: Bool,
+) -> Element(Message) {
   html.div([], [
     html.aside([attribute.class("authenticated-user")], content(auth_state)),
-    modal_view(auth_state, modal_open),
+    auth_modal_view(auth_state, auth_modal_open),
+    settings_modal_view(settings_modal_open),
   ])
 }
 
@@ -50,6 +56,12 @@ fn content(auth_state: AuthState) -> List(Element(Message)) {
         ],
         [avatar(profile)],
       ),
+      button.view(button.Config(
+        label: "Settings",
+        size: button.ExtraLarge,
+        variant: button.Icon("settings.svg"),
+        on_click: OpenSettingsModal,
+      )),
     ]
     Checking -> [login_button()]
     Unavailable -> [login_button()]
@@ -70,9 +82,28 @@ fn login_button() -> Element(Message) {
   )
 }
 
-fn modal_view(auth_state: AuthState, modal_open: Bool) -> Element(Message) {
+fn auth_modal_view(
+  auth_state: AuthState,
+  modal_open: Bool,
+) -> Element(Message) {
   case modal_open {
     True -> auth_modal(auth_state)
+    False -> html.div([], [])
+  }
+}
+
+fn settings_modal_view(modal_open: Bool) -> Element(Message) {
+  case modal_open {
+    True ->
+      modal.view(
+        modal.Config(
+          title: "Settings",
+          close_label: "Close settings dialog",
+          on_close: CloseSettingsModal,
+          on_ignore: NoOp,
+          children: [],
+        ),
+      )
     False -> html.div([], [])
   }
 }

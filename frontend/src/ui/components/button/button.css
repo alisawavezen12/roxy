@@ -37,6 +37,12 @@
   font-size: var(--font-size-lg);
 }
 
+.button--xl {
+  min-height: var(--button-height-xl);
+  padding: var(--button-padding-y-xl) var(--button-padding-x-xl);
+  font-size: var(--font-size-lg);
+}
+
 .button--primary {
   background: var(--button-primary-bg);
   color: var(--button-primary-text);
@@ -63,4 +69,60 @@
 
 .button--danger:hover {
   background: var(--button-danger-bg-hover);
+}
+
+.button--icon {
+  width: var(--button-height-md);
+  min-width: var(--button-height-md);
+  height: var(--button-height-md);
+  min-height: var(--button-height-md);
+  flex: 0 0 var(--button-height-md);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.button--icon:hover,
+.button--icon:focus-visible {
+  background: transparent;
+  color: var(--color-accent-hover);
+  transform: none;
+}
+
+.button--icon:active {
+  transform: none;
+}
+
+.button__icon {
+  width: 1.25rem;
+  height: 1.25rem;
+  display: block;
+  transform: rotate(0deg);
+  transition: transform var(--transition-normal), color var(--transition-fast);
+  background-color: currentColor;
+  -webkit-mask: var(--button-icon) center / contain no-repeat;
+  mask: var(--button-icon) center / contain no-repeat;
+}
+
+.button--xl.button--icon {
+  width: var(--button-height-xl);
+  min-width: var(--button-height-xl);
+  height: var(--button-height-xl);
+  min-height: var(--button-height-xl);
+  flex-basis: var(--button-height-xl);
+  padding: 0;
+}
+
+.button--xl.button--icon .button__icon {
+  width: var(--button-height-xl);
+  height: var(--button-height-xl);
+}
+
+.button--icon:hover .button__icon,
+.button--icon:focus-visible .button__icon {
+  transform: rotate(30deg);
 }

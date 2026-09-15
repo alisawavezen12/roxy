@@ -31,6 +31,9 @@ minify = true
 
 [tools.lustre.html]
 title = "Roxy"
+links = [
+  { rel = "icon", href = "/favicon.ico", type = "image/x-icon" },
+]
 stylesheets = [
   { href = "/ui/styles/reset.css" },
   { href = "/ui/styles/tokens.css" },

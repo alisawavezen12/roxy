@@ -15,12 +15,15 @@
   --button-height-sm: 2rem;
   --button-height-md: 2.5rem;
   --button-height-lg: 3rem;
+  --button-height-xl: 2.875rem;
   --button-padding-y-sm: var(--space-2);
   --button-padding-y-md: var(--space-3);
   --button-padding-y-lg: var(--space-4);
   --button-padding-x-sm: var(--space-3);
   --button-padding-x-md: var(--space-4);
   --button-padding-x-lg: var(--space-6);
+  --button-padding-y-xl: var(--space-4);
+  --button-padding-x-xl: var(--space-8);
 
   /* Spacing */
   --space-1: 0.25rem;

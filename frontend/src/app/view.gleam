@@ -14,5 +14,10 @@ pub fn view(model: Model) -> Element(Message) {
     NotFound -> not_found.view()
   }
 
-  base_layout.view(page, model.auth, model.auth_modal_open)
+  base_layout.view(
+    page,
+    model.auth,
+    model.auth_modal_open,
+    model.settings_modal_open,
+  )
 }

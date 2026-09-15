@@ -8,6 +8,8 @@ pub type Message {
   SelectUserTab(model.UserTab)
   OpenAuthModal
   CloseAuthModal
+  OpenSettingsModal
+  CloseSettingsModal
   StartSsoLogin
   NoOp
 }

@@ -9,6 +9,7 @@ pub fn view(
   content: Element(Message),
   auth: AuthState,
   auth_modal_open: Bool,
+  settings_modal_open: Bool,
 ) -> Element(Message) {
   html.div([], [
     html.link([
@@ -18,7 +19,7 @@ pub fn view(
     authenticated_user.stylesheet(),
     html.div([attribute.class("layout")], [
       html.div([attribute.class("layout__sidebar")], [
-        authenticated_user.view(auth, auth_modal_open),
+        authenticated_user.view(auth, auth_modal_open, settings_modal_open),
       ]),
       html.div([attribute.class("layout__content")], [content]),
     ]),

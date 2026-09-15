@@ -27,5 +27,6 @@ pub type Model {
     user_page: UserPageState,
     user_tab: UserTab,
     auth_modal_open: Bool,
+    settings_modal_open: Bool,
   )
 }

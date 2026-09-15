@@ -4,5 +4,6 @@
 **/dist/
 frontend/assets/ui/
 frontend/assets/pages/
+frontend/assets/modules/
 
 erl_crash.dump

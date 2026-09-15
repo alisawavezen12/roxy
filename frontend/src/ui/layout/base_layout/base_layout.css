@@ -13,6 +13,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  border-radius: var(--radius-lg) 0 0 var(--radius-lg);
+  background: var(--color-accent-soft);
 }
 
 .layout__content {

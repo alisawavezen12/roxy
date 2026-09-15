@@ -46,7 +46,7 @@ fn content(auth_state: AuthState) -> List(Element(Message)) {
         [
           attribute.class("authenticated-user__link"),
           attribute.href("/user/" <> profile.id),
-          attribute.title("Open your profile"),
+          attribute.title("Go to my profile"),
         ],
         [avatar(profile)],
       ),
@@ -62,7 +62,8 @@ fn login_button() -> Element(Message) {
     [
       attribute.class("authenticated-user__login"),
       attribute.type_("button"),
-      attribute.attribute("aria-label", "Sign in with Dobrunia"),
+      attribute.attribute("aria-label", "Sign in with Dobrunia Auth"),
+      attribute.title("Sign in with Dobrunia Auth"),
       event.on_click(OpenAuthModal),
     ],
     [html.span([attribute.attribute("aria-hidden", "true")], [])],
@@ -79,7 +80,7 @@ fn modal_view(auth_state: AuthState, modal_open: Bool) -> Element(Message) {
 fn auth_modal(auth_state: AuthState) -> Element(Message) {
   let message = case auth_state {
     Unavailable -> "Unable to check the session. Please try again."
-    _ -> "Sign in with Dobrunia to continue using Roxy."
+    _ -> "Sign in with Dobrunia Auth to continue using Roxy."
   }
   modal.view(
     modal.Config(
@@ -92,7 +93,7 @@ fn auth_modal(auth_state: AuthState) -> Element(Message) {
           html.text(message),
         ]),
         button.view(button.Config(
-          label: "Sign in with Dobrunia",
+          label: "Sign in with Dobrunia Auth",
           size: button.Large,
           variant: button.Primary,
           on_click: StartSsoLogin,

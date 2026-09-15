@@ -9,6 +9,7 @@ import app/model.{
   UserLoadFailed, UserLoaded as UserLoadedState, UserLoading, UserNotFound,
 }
 import lustre/effect.{type Effect}
+import modules/authenticated_user/authenticated_user
 import routes/route.{type Route, User}
 
 pub fn init(route: Route) -> #(Model, Effect(Message)) {
@@ -29,13 +30,13 @@ pub fn update(model: Model, message: Message) -> #(Model, Effect(Message)) {
     UserLoaded(result) -> apply_user_result(model, result)
     OpenAuthModal -> #(Model(..model, auth_modal_open: True), effect.none())
     CloseAuthModal -> #(Model(..model, auth_modal_open: False), effect.none())
-    StartSsoLogin -> #(model, auth.start_sso_login())
+    StartSsoLogin -> #(model, authenticated_user.start_login())
     NoOp -> #(model, effect.none())
   }
 }
 
 fn load(route: Route) -> Effect(Message) {
-  let auth_effect = auth.load_current_user() |> effect.map(AuthChecked)
+  let auth_effect = authenticated_user.load() |> effect.map(AuthChecked)
   case route {
     User(id) ->
       effect.batch([
@@ -56,11 +57,11 @@ fn apply_auth_result(
       effect.none(),
     )
     auth.SignedOut -> #(
-      Model(..model, auth: Unauthenticated, auth_modal_open: True),
+      Model(..model, auth: Unauthenticated, auth_modal_open: False),
       effect.none(),
     )
     auth.Failed -> #(
-      Model(..model, auth: Unavailable, auth_modal_open: True),
+      Model(..model, auth: Unavailable, auth_modal_open: False),
       effect.none(),
     )
   }

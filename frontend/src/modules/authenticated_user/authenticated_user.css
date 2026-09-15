@@ -1,0 +1,67 @@
+.authenticated-user {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.authenticated-user__link,
+.authenticated-user__login {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
+.authenticated-user__login {
+  width: 4.5rem;
+  height: 4.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--color-secondary);
+  color: var(--color-text);
+}
+
+.authenticated-user__login:hover,
+.authenticated-user__login:focus-visible {
+  background: var(--color-secondary-hover);
+}
+
+.authenticated-user__login span {
+  width: 2.25rem;
+  height: 2.25rem;
+  display: block;
+  background-color: currentColor;
+  -webkit-mask: url("/svg/user.svg") center / contain no-repeat;
+  mask: url("/svg/user.svg") center / contain no-repeat;
+}
+
+.authenticated-user__avatar {
+  width: 4.5rem;
+  height: 4.5rem;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: var(--button-primary-text);
+  font-size: var(--font-size-xl);
+  font-weight: var(--button-font-weight);
+}
+
+.authenticated-user__status {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  text-align: center;
+}
+
+.authenticated-user__auth-copy {
+  margin: 0 0 var(--space-5);
+  color: var(--color-text-muted);
+  line-height: 1.5;
+}
+
+.authenticated-user .button {
+  width: 100%;
+}

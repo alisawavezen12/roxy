@@ -11,9 +11,11 @@ src/
 │   └── websocket/
 ├── app/
 ├── domain/
+├── modules/
 ├── pages/
 ├── routes/
 ├── ui/
+│   ├── components/
 │   ├── layout/
 │   └── styles/
 └── frontend.gleam
@@ -50,7 +52,7 @@ Global application coordination:
 - root `update` function;
 - root view composition and application-wide effects.
 
-`app/` connects pages, routes, API effects, and domain data. It should not become
+`app/` connects pages, routes, modules, API effects, and domain data. It should not become
 a dumping ground for screen-specific state or reusable visual components.
 
 ### `src/domain/`
@@ -103,6 +105,17 @@ URL and route concerns:
 
 Routes select pages. They should not contain business logic or API decoding.
 
+### `src/modules/`
+
+Feature modules combine API effects, feature state, and presentation for a
+cross-page feature. For example, `modules/authenticated_user` owns the authenticated-user
+layout slot and its display logic while using the auth API layer. A module may
+contain a `.gleam` module and a colocated `.css` file; it is not a reusable UI
+primitive.
+
+Feature modules may depend on `api/`, `domain/`, and `ui/`, but reusable visual
+primitives must remain in `ui/` and transport code must remain in `api/`.
+
 ### `src/ui/`
 
 Reusable presentation and UI primitives:
@@ -115,8 +128,9 @@ Layouts are grouped under `ui/layout/`, and reusable UI components are grouped
 under `ui/components/`. Component-specific styles live next to the component
 that uses them.
 
-`ui/` should focus on rendering and interaction wiring. It should not perform
-HTTP requests or own global application state.
+`ui/` should contain only reusable presentation primitives and layouts. It
+must not perform HTTP requests, own feature state, or contain feature-specific
+business logic.
 
 ### `src/ui/styles/`
 
@@ -141,12 +155,15 @@ production, so CSS is not duplicated manually in `assets/`.
 Use these rules when adding a module:
 
 1. `domain/` must not import `ui/`, `pages/`, `app/`, `api/`, Lustre, or HTTP.
-2. `ui/` renders data and emits messages; it does not fetch data.
-3. `api/` owns serialization and transport details; it does not render HTML.
-4. `pages/` orchestrates a screen; reusable visual code belongs in `ui/`.
-5. `app/` coordinates the application; it should delegate domain rules to
+2. `modules/` orchestrates cross-page features and may combine `api/`,
+   `domain/`, and `ui/`.
+3. `ui/` renders data and emits messages; it does not fetch data or own feature
+   state.
+4. `api/` owns serialization and transport details; it does not render HTML.
+5. `pages/` orchestrates a screen; reusable visual code belongs in `ui/`.
+6. `app/` coordinates the application; it should delegate domain rules to
    `domain/` and network work to `api/`.
-6. Pages use the base layout by default through the root application view; do not
+7. Pages use the base layout by default through the root application view; do not
    duplicate layout wrappers inside page modules.
-7. Add new modules only when a real feature needs them; avoid creating empty
+8. Add new modules only when a real feature needs them; avoid creating empty
    abstractions in advance.

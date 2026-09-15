@@ -6,15 +6,22 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-6);
-  padding: var(--space-4) var(--space-2);
+  padding: 0 var(--space-2);
 }
 
-.authenticated-user__link,
-.authenticated-user__login {
+.authenticated-user__link {
   display: grid;
   flex: 0 0 auto;
   place-items: center;
+  border: 2px solid transparent;
+  border-radius: 50%;
   cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.authenticated-user__link:hover,
+.authenticated-user__link:focus-visible {
+  border-color: var(--color-accent-hover);
 }
 
 .authenticated-user__login {
@@ -24,7 +31,9 @@
   min-height: 4rem;
   flex: 0 0 4rem;
   aspect-ratio: 1;
+  box-sizing: border-box;
   padding: 0;
+  line-height: 0;
   border: 0;
   border-radius: 50%;
   background: var(--color-secondary);
@@ -40,6 +49,9 @@
   width: 2.25rem;
   height: 2.25rem;
   display: block;
+  place-self: center;
+  margin: 0;
+  line-height: 0;
   background-color: currentColor;
   -webkit-mask: url("/svg/user.svg") center / contain no-repeat;
   mask: url("/svg/user.svg") center / contain no-repeat;

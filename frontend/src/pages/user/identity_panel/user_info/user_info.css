@@ -14,11 +14,12 @@
 }
 
 .user-info__empty {
+  width: max-content;
   display: grid;
-  width: 100%;
   align-content: center;
   justify-items: center;
   gap: var(--space-3);
+  margin: 0 auto;
   min-height: 100%;
   color: var(--color-text-muted);
   text-align: center;

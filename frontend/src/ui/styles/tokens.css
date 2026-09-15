@@ -16,6 +16,8 @@
   --button-height-md: 2.5rem;
   --button-height-lg: 3rem;
   --button-height-xl: 2.875rem;
+
+  --button-opacity-disabled: 0.45;
   --button-padding-y-sm: var(--space-2);
   --button-padding-y-md: var(--space-3);
   --button-padding-y-lg: var(--space-4);
@@ -34,6 +36,7 @@
   --space-6: 1.5rem;
   --space-8: 2rem;
 
+
   /* Layout */
   --layout-top-padding: 6rem;
   --layout-side-padding: 12rem;
@@ -47,4 +50,5 @@
   /* Motion */
   --transition-fast: 120ms ease;
   --transition-normal: 200ms ease;
+  --transition-long: 320ms ease;
 }

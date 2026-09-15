@@ -1,8 +1,15 @@
 .user-board {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  left: 0;
+  width: max-content;
   display: grid;
   align-content: center;
   justify-items: center;
   gap: var(--space-3);
+  margin: 0 auto;
+  transform: translateY(-50%);
   color: var(--color-text-muted);
   grid-template-rows: max-content max-content;
   text-align: center;

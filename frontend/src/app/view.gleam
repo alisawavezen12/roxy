@@ -10,7 +10,7 @@ import ui/layout/base_layout/base_layout
 pub fn view(model: Model) -> Element(Message) {
   let page = case model.route {
     Home -> onboarding.view(model.auth)
-    User(_id) -> user.view(model.user_tab, model.user_page)
+    User(_id) -> user.view(model.user_tab, model.user_page, model.post_content)
     NotFound -> not_found.view()
   }
 

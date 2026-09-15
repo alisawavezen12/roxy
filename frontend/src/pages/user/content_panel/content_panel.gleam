@@ -19,7 +19,7 @@ pub fn stylesheet() -> Element(message) {
   ])
 }
 
-pub fn view(active_tab: UserTab) -> Element(Message) {
+pub fn view(active_tab: UserTab, post_content: String) -> Element(Message) {
   html.section([attribute.class("content-panel")], [
     html.div([attribute.class("content-panel__tabs")], [
       tabs.view(tabs.Config(
@@ -31,13 +31,15 @@ pub fn view(active_tab: UserTab) -> Element(Message) {
         on_select: SelectUserTab,
       )),
     ]),
-    html.div([attribute.class("content-panel__body")], [content(active_tab)]),
+    html.div([attribute.class("content-panel__body")], [
+      content(active_tab, post_content),
+    ]),
   ])
 }
 
-fn content(active_tab: UserTab) -> Element(Message) {
+fn content(active_tab: UserTab, post_content: String) -> Element(Message) {
   case active_tab {
-    Wall -> wall.view()
+    Wall -> wall.view(post_content)
     Board -> board.view()
   }
 }

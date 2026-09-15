@@ -42,6 +42,7 @@ fn action(auth: AuthState) -> Element(Message) {
             size: button.Medium,
             variant: button.Primary,
             on_click: NoOp,
+            disabled: False,
           )),
         ],
       )
@@ -51,6 +52,7 @@ fn action(auth: AuthState) -> Element(Message) {
         size: button.Medium,
         variant: button.Primary,
         on_click: OpenAuthModal,
+        disabled: False,
       ))
   }
 }

@@ -14,6 +14,7 @@
   align-items: center;
   justify-content: center;
   border: 2px solid var(--color-surface);
+  box-sizing: border-box;
   border-radius: var(--radius-lg) 0 0 var(--radius-lg);
 }
 

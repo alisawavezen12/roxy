@@ -10,6 +10,7 @@ import pages/user/identity_panel/user_info/user_info
 pub fn view(
   active_tab: UserTab,
   profile_state: UserPageState,
+  post_content: String,
 ) -> Element(Message) {
   html.div([], [
     html.link([
@@ -21,7 +22,7 @@ pub fn view(
     user_info.stylesheet(),
     html.main([attribute.class("user-page")], [
       html.section([attribute.class("user-page__content")], [
-        content_panel.view(active_tab),
+        content_panel.view(active_tab, post_content),
       ]),
       html.section([attribute.class("user-page__profile")], [
         user_info.view(profile_state),

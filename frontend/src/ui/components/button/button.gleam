@@ -10,15 +10,28 @@ pub type Size {
   ExtraLarge
 }
 
+pub type IconAnimation {
+  None
+  Bounce
+  Send
+}
+
 pub type Variant {
   Primary
   Secondary
   Danger
   Icon(icon: String)
+  IconAnimated(icon: String, animation: IconAnimation)
 }
 
 pub type Config(message) {
-  Config(label: String, size: Size, variant: Variant, on_click: message)
+  Config(
+    label: String,
+    size: Size,
+    variant: Variant,
+    on_click: message,
+    disabled: Bool,
+  )
 }
 
 pub fn stylesheet() -> Element(message) {
@@ -34,6 +47,7 @@ pub fn view(config: Config(message)) -> Element(message) {
       attribute.class(class_name(config.size, config.variant)),
       attribute.type_("button"),
       icon_label(config.variant, config.label),
+      disabled_attribute(config.disabled),
       event.on_click(config.on_click),
     ],
     content(config),
@@ -53,16 +67,23 @@ fn size_name(size: Size) -> String {
   }
 }
 
+fn disabled_attribute(disabled: Bool) -> attribute.Attribute(message) {
+  case disabled {
+    True -> attribute.attribute("disabled", "true")
+    False -> attribute.attribute("aria-disabled", "false")
+  }
+}
+
 fn icon_label(variant: Variant, label: String) -> attribute.Attribute(message) {
   case variant {
-    Icon(_) -> attribute.attribute("aria-label", label)
+    Icon(_) | IconAnimated(_, _) -> attribute.attribute("aria-label", label)
     _ -> attribute.attribute("aria-hidden", "false")
   }
 }
 
 fn content(config: Config(message)) -> List(Element(message)) {
   case config.variant {
-    Icon(icon) -> [
+    Icon(icon) | IconAnimated(icon, _) -> [
       html.span(
         [
           attribute.class("button__icon"),
@@ -82,5 +103,14 @@ fn variant_name(variant: Variant) -> String {
     Secondary -> "secondary"
     Danger -> "danger"
     Icon(_) -> "icon"
+    IconAnimated(_, animation) -> "icon icon--" <> animation_name(animation)
+  }
+}
+
+fn animation_name(animation: IconAnimation) -> String {
+  case animation {
+    None -> "none"
+    Bounce -> "bounce"
+    Send -> "send"
   }
 }

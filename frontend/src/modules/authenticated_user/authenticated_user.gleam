@@ -61,6 +61,7 @@ fn content(auth_state: AuthState) -> List(Element(Message)) {
         size: button.ExtraLarge,
         variant: button.Icon("settings.svg"),
         on_click: OpenSettingsModal,
+        disabled: False,
       )),
     ]
     Checking -> [login_button()]
@@ -128,6 +129,7 @@ fn auth_modal(auth_state: AuthState) -> Element(Message) {
           size: button.Large,
           variant: button.Primary,
           on_click: StartSsoLogin,
+          disabled: False,
         )),
       ],
     ),

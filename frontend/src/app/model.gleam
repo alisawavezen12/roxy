@@ -28,5 +28,6 @@ pub type Model {
     user_tab: UserTab,
     auth_modal_open: Bool,
     settings_modal_open: Bool,
+    post_content: String,
   )
 }

@@ -15,11 +15,17 @@ pub type UserPageState {
   UserLoadFailed
 }
 
+pub type UserTab {
+  Wall
+  Board
+}
+
 pub type Model {
   Model(
     route: Route,
     auth: AuthState,
     user_page: UserPageState,
+    user_tab: UserTab,
     auth_modal_open: Bool,
   )
 }

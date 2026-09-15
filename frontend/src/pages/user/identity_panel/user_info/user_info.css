@@ -1,0 +1,45 @@
+.user-info {
+  width: 100%;
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.user-info__content {
+  width: min(100%, 15.75rem);
+  margin: 0 auto;
+  padding-top: var(--space-8);
+  padding-bottom: var(--space-8);
+}
+
+.user-info__empty {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: var(--space-3);
+  min-height: 100%;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.user-info__empty p,
+.user-info__status {
+  margin: 0;
+}
+
+.user-info__empty-icon {
+  width: 3rem;
+  height: 3rem;
+  display: block;
+  background-color: currentColor;
+  -webkit-mask: url("/svg/user.svg") center / contain no-repeat;
+  mask: url("/svg/user.svg") center / contain no-repeat;
+}
+
+.user-info__status {
+  width: 100%;
+  align-self: center;
+  color: var(--color-text-muted);
+  text-align: center;
+}

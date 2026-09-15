@@ -1,8 +1,8 @@
 import api/auth/auth
 import api/user/user as user_api
 import app/message.{
-  type Message, AuthChecked, CloseAuthModal, NoOp, OpenAuthModal, StartSsoLogin,
-  UserLoaded,
+  type Message, AuthChecked, CloseAuthModal, NoOp, OpenAuthModal, SelectUserTab,
+  StartSsoLogin, UserLoaded,
 }
 import app/model.{
   type Model, Authenticated, Checking, Model, Unauthenticated, Unavailable,
@@ -18,6 +18,7 @@ pub fn init(route: Route) -> #(Model, Effect(Message)) {
       route:,
       auth: Checking,
       user_page: UserLoading,
+      user_tab: model.Wall,
       auth_modal_open: False,
     ),
     load(route),
@@ -28,6 +29,7 @@ pub fn update(model: Model, message: Message) -> #(Model, Effect(Message)) {
   case message {
     AuthChecked(result) -> apply_auth_result(model, result)
     UserLoaded(result) -> apply_user_result(model, result)
+    SelectUserTab(tab) -> #(Model(..model, user_tab: tab), effect.none())
     OpenAuthModal -> #(Model(..model, auth_modal_open: True), effect.none())
     CloseAuthModal -> #(Model(..model, auth_modal_open: False), effect.none())
     StartSsoLogin -> #(model, authenticated_user.start_login())

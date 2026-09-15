@@ -5,6 +5,13 @@ import lustre/element.{type Element}
 import lustre/element/html
 import shared/user.{type User}
 
+pub fn stylesheet() -> Element(message) {
+  html.link([
+    attribute.rel("stylesheet"),
+    attribute.href("/pages/user/identity_panel/identity_panel.css"),
+  ])
+}
+
 pub fn view(profile: User) -> Element(Message) {
   html.aside([attribute.class("identity-panel")], [
     avatar(profile),

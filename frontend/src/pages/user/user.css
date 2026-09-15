@@ -7,73 +7,17 @@
   align-items: stretch;
 }
 
-.user-page__posts {
-  min-width: 0;
-  min-height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.user-page__empty {
-  display: grid;
-  justify-items: center;
-  gap: var(--space-3);
-  margin: 0;
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.user-page__empty p {
-  margin: 0;
-}
-
-.user-page__empty-icon {
-  width: 3rem;
-  height: 3rem;
-  display: block;
-  background-color: currentColor;
-  -webkit-mask: var(--empty-icon) center / contain no-repeat;
-  mask: var(--empty-icon) center / contain no-repeat;
-  opacity: 0.7;
-}
-
+.user-page__content,
 .user-page__profile {
   min-width: 0;
   min-height: 100%;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: var(--space-8);
 }
 
-.user-page__profile-empty {
-  width: 100%;
-  min-height: 100%;
+.user-page__profile {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   justify-content: center;
 }
-
-.user-page__status {
-  width: 100%;
-  margin: 0;
-  color: var(--color-text-muted);
-  text-align: center;
-}
-
-.user-page__profile > .identity-panel {
-  width: min(100%, 15.75rem);
-  flex: 0 0 auto;
-  margin: 0;
-}
-
-.user-page__auth-copy {
-  margin: 0 0 var(--space-5);
-  color: var(--color-text-muted);
-  line-height: 1.5;
-}
-
 
 @media (max-width: 700px) {
   .user-page {
@@ -81,17 +25,8 @@
     gap: var(--space-6);
   }
 
-  .user-page__profile,
-  .user-page__posts {
-    grid-column: 1;
-  }
-
+  .user-page__content,
   .user-page__profile {
-    align-items: center;
-    padding-top: 0;
-  }
-
-  .user-page__profile-empty {
-    min-height: auto;
+    grid-column: 1;
   }
 }

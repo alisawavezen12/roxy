@@ -1,0 +1,35 @@
+.content-panel {
+  position: relative;
+  min-width: 0;
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.content-panel__tabs {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  justify-content: center;
+  padding-top: var(--space-8);
+}
+
+.content-panel__body {
+  min-height: 0;
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+}
+
+.content-panel__body > * {
+  flex: 1;
+}
+
+@media (max-width: 700px) {
+  .content-panel__tabs {
+    padding-top: var(--space-6);
+  }
+}

@@ -61,12 +61,14 @@ Local user profiles linked to Dobrunia Auth.
 | `id` | Local user ID; currently equal to the Dobrunia user ID |
 | `dobrunia_user_id` | Stable external identity, unique |
 | `email` | Current email from Dobrunia Auth |
+| `username` | Optional Dobrunia username when provided by `/auth/me` |
 | `first_name`, `last_name` | Optional profile names |
 | `avatar_url` | Optional avatar URL |
 | `created_at`, `updated_at` | Local timestamps |
 
-On each successful OAuth login, the user is inserted or their profile fields
-are updated by external identity.
+On each successful OAuth login, the backend requests Dobrunia `/auth/me`, then
+inserts the user or updates all supported profile fields. Deleting a local user
+cascades to all of their local sessions.
 
 ### `sessions`
 

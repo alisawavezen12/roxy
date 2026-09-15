@@ -12,6 +12,7 @@ pub type User {
   User(
     id: String,
     email: String,
+    username: Option(String),
     first_name: Option(String),
     last_name: Option(String),
     avatar_url: Option(String),
@@ -75,6 +76,24 @@ pub fn exchange_code(
     ]),
     tokens_decoder(),
   )
+}
+
+pub fn profile(access_token: String) -> Result(User, Error) {
+  use http_request <- result.try(
+    request.to(auth.provider_base_url <> "/auth/me")
+    |> result.map_error(fn(_) { Configuration }),
+  )
+  let http_request =
+    http_request
+    |> request.set_header("authorization", "Bearer " <> access_token)
+    |> request.set_header("accept", "application/json")
+  use response <- result.try(send(http_request))
+  case response.status >= 200 && response.status < 300 {
+    True ->
+      json.parse(response.body, profile_decoder())
+      |> result.map_error(fn(_) { InvalidResponse })
+    False -> Error(Rejected(response.status))
+  }
 }
 
 pub fn refresh(refresh_token: String) -> Result(TokenPair, Error) {
@@ -142,6 +161,11 @@ pub fn decode_tokens(body: String) -> Result(Tokens, Nil) {
   |> result.map_error(fn(_) { Nil })
 }
 
+pub fn decode_profile(body: String) -> Result(User, Nil) {
+  json.parse(body, profile_decoder())
+  |> result.map_error(fn(_) { Nil })
+}
+
 pub fn decode_token_pair(body: String) -> Result(TokenPair, Nil) {
   json.parse(body, token_pair_decoder())
   |> result.map_error(fn(_) { Nil })
@@ -169,6 +193,11 @@ fn token_pair_decoder() -> decode.Decoder(TokenPair) {
 fn user_decoder() -> decode.Decoder(User) {
   use id <- decode.field("id", decode.string)
   use email <- decode.field("email", decode.string)
+  use username <- decode.optional_field(
+    "username",
+    option.None,
+    decode.optional(decode.string),
+  )
   use first_name <- decode.optional_field(
     "firstName",
     option.None,
@@ -184,7 +213,18 @@ fn user_decoder() -> decode.Decoder(User) {
     option.None,
     decode.optional(decode.string),
   )
-  decode.success(User(id:, email:, first_name:, last_name:, avatar_url:))
+  decode.success(User(
+    id:,
+    email:,
+    username:,
+    first_name:,
+    last_name:,
+    avatar_url:,
+  ))
+}
+
+fn profile_decoder() -> decode.Decoder(User) {
+  decode.field("user", user_decoder(), decode.success)
 }
 
 fn session_decoder() -> decode.Decoder(String) {

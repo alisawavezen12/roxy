@@ -170,14 +170,25 @@ fn complete_callback(
             "provider_error",
           )
         Ok(tokens) ->
-          persist_login(
-            http_request,
-            dependencies,
-            context,
-            base_response,
-            tokens,
-            return_to,
-          )
+          case dobrunia_auth.profile(tokens.access_token) {
+            Error(_) ->
+              redirect_error(
+                base_response,
+                config.auth,
+                return_to,
+                "profile_error",
+              )
+            Ok(profile) ->
+              persist_login(
+                http_request,
+                dependencies,
+                context,
+                base_response,
+                tokens,
+                profile,
+                return_to,
+              )
+          }
       }
   }
 }
@@ -188,6 +199,7 @@ fn persist_login(
   _context: transport_context.TransportContext,
   base_response: wisp.Response,
   tokens: dobrunia_auth.Tokens,
+  profile: dobrunia_auth.User,
   return_to: String,
 ) -> wisp.Response {
   let config = dependencies.config
@@ -198,11 +210,12 @@ fn persist_login(
       use user_id <- result.try(user.upsert(
         connection,
         user.Profile(
-          id: tokens.user.id,
-          email: tokens.user.email,
-          first_name: tokens.user.first_name,
-          last_name: tokens.user.last_name,
-          avatar_url: tokens.user.avatar_url,
+          id: profile.id,
+          email: profile.email,
+          username: profile.username,
+          first_name: profile.first_name,
+          last_name: profile.last_name,
+          avatar_url: profile.avatar_url,
         ),
         config.postgres.query_timeout,
       ))

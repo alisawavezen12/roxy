@@ -40,9 +40,20 @@ pub fn exchange_response_decodes_required_contract_test() {
   tokens.access_token |> should.equal("access")
   tokens.refresh_token |> should.equal("refresh")
   tokens.user.id |> should.equal("user-1")
+  tokens.user.username |> should.equal(option.None)
   tokens.user.first_name |> should.equal(option.Some("Dobrynya"))
   tokens.user.last_name |> should.equal(option.None)
   tokens.provider_session_id |> should.equal("provider-session")
+}
+
+pub fn profile_response_decodes_username_and_avatar_test() {
+  let body =
+    "{\"user\":{\"id\":\"user-1\",\"email\":\"user@example.com\",\"username\":\"sentry\",\"firstName\":null,\"lastName\":null,\"avatarUrl\":\"https://cdn.example/avatar.png\"}}"
+  let assert Ok(profile) = dobrunia_auth.decode_profile(body)
+
+  profile.username |> should.equal(option.Some("sentry"))
+  profile.avatar_url
+  |> should.equal(option.Some("https://cdn.example/avatar.png"))
 }
 
 pub fn refresh_response_decodes_rotated_pair_without_user_test() {

@@ -37,7 +37,7 @@ fn user_name(
 ) -> Result(String, pog.QueryError) {
   let query =
     pog.query(
-      "select coalesce(nullif(trim(concat_ws(' ', first_name, last_name)), ''), email) from users where id = $1",
+      "select coalesce(nullif(trim(concat_ws(' ', first_name, last_name)), ''), nullif(username, ''), email) from users where id = $1",
     )
     |> pog.parameter(pog.text(user_id))
     |> pog.returning(decode.subfield([0], decode.string, decode.success))

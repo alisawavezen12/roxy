@@ -6,6 +6,7 @@ pub type Profile {
   Profile(
     id: String,
     email: String,
+    username: Option(String),
     first_name: Option(String),
     last_name: Option(String),
     avatar_url: Option(String),
@@ -19,10 +20,11 @@ pub fn upsert(
 ) -> Result(String, pog.QueryError) {
   let query =
     pog.query(
-      "insert into users (id, dobrunia_user_id, email, first_name, last_name, avatar_url) values ($1, $1, $2, $3, $4, $5) on conflict (dobrunia_user_id) do update set email = excluded.email, first_name = excluded.first_name, last_name = excluded.last_name, avatar_url = excluded.avatar_url, updated_at = now() returning id",
+      "insert into users (id, dobrunia_user_id, email, username, first_name, last_name, avatar_url) values ($1, $1, $2, $3, $4, $5, $6) on conflict (dobrunia_user_id) do update set email = excluded.email, username = excluded.username, first_name = excluded.first_name, last_name = excluded.last_name, avatar_url = excluded.avatar_url, updated_at = now() returning id",
     )
     |> pog.parameter(pog.text(profile.id))
     |> pog.parameter(pog.text(profile.email))
+    |> pog.parameter(pog.nullable(pog.text, profile.username))
     |> pog.parameter(pog.nullable(pog.text, profile.first_name))
     |> pog.parameter(pog.nullable(pog.text, profile.last_name))
     |> pog.parameter(pog.nullable(pog.text, profile.avatar_url))

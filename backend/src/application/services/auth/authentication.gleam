@@ -1,12 +1,12 @@
-import application/services/dobrunia_auth
-import application/services/session
+import application/services/auth/dobrunia
+import application/services/auth/session
 import config/auth
 import gleam/result
 import pog
 import security/token_cipher
 
 pub type Error {
-  Auth(dobrunia_auth.Error)
+  Auth(dobrunia.Error)
   Database(pog.QueryError)
   InvalidStoredToken
 }
@@ -29,7 +29,7 @@ pub fn refresh_session(
   )
   use refresh_token <- result.try(decrypt(current.refresh_token, encryption_key))
   use tokens <- result.try(
-    dobrunia_auth.refresh(refresh_token)
+    dobrunia.refresh(refresh_token)
     |> result.map_error(Auth),
   )
   let persisted =
@@ -80,7 +80,7 @@ pub fn logout_session(
     encryption_key,
   ))
   use _ <- result.try(
-    dobrunia_auth.logout(refresh_token)
+    dobrunia.logout(refresh_token)
     |> result.map_error(Auth),
   )
   session.revoke(connection, session_token, query_timeout)

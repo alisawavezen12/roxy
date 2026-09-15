@@ -1,4 +1,4 @@
-import application/services/session
+import application/services/auth/session
 import gleam/bit_array
 import gleam/crypto
 import gleam/dynamic/decode
@@ -33,7 +33,7 @@ pub fn consume(
   state: String,
   binding: String,
   timeout: Int,
-) -> Result(ResultPath, pog.QueryError) {
+) -> Result(ReturnTo, pog.QueryError) {
   let query =
     pog.query(
       "delete from oauth_states where state_hash = $1 and binding_hash = $2 and expires_at > now() returning return_path",
@@ -43,15 +43,15 @@ pub fn consume(
     |> pog.returning(decode.subfield([0], decode.string, decode.success))
     |> pog.timeout(timeout)
   case pog.execute(query, connection) {
-    Ok(pog.Returned(rows: [return_path, ..], ..)) -> Ok(ReturnPath(return_path))
-    Ok(_) -> Ok(InvalidPath)
+    Ok(pog.Returned(rows: [return_path, ..], ..)) -> Ok(ReturnTo(return_path))
+    Ok(_) -> Ok(NotFound)
     Error(error) -> Error(error)
   }
 }
 
-pub type ResultPath {
-  ReturnPath(String)
-  InvalidPath
+pub type ReturnTo {
+  ReturnTo(String)
+  NotFound
 }
 
 fn random_token() -> String {

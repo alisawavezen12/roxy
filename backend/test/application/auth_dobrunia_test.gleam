@@ -1,4 +1,4 @@
-import application/services/dobrunia_auth
+import application/services/auth/dobrunia
 import config/auth
 import gleam/option
 import gleam/string
@@ -14,7 +14,7 @@ fn config() -> auth.AuthConfig {
 }
 
 pub fn authorize_url_contains_encoded_contract_values_test() {
-  let assert Ok(url) = dobrunia_auth.authorize_url(config(), "state+/=")
+  let assert Ok(url) = dobrunia.authorize_url(config(), "state+/=")
 
   url
   |> string.contains("response_type=code")
@@ -35,37 +35,34 @@ pub fn authorize_url_contains_encoded_contract_values_test() {
 pub fn exchange_response_decodes_required_contract_test() {
   let body =
     "{\"accessToken\":\"access\",\"refreshToken\":\"refresh\",\"user\":{\"id\":\"user-1\",\"email\":\"user@example.com\",\"firstName\":\"Dobrynya\",\"lastName\":null,\"avatarUrl\":null},\"session\":{\"id\":\"provider-session\",\"clientId\":\"client\"}}"
-  let assert Ok(tokens) = dobrunia_auth.decode_tokens(body)
+  let assert Ok(tokens) = dobrunia.decode_tokens(body)
 
   tokens.access_token |> should.equal("access")
   tokens.refresh_token |> should.equal("refresh")
-  tokens.user.id |> should.equal("user-1")
-  tokens.user.username |> should.equal(option.None)
-  tokens.user.first_name |> should.equal(option.Some("Dobrynya"))
-  tokens.user.last_name |> should.equal(option.None)
+
   tokens.provider_session_id |> should.equal("provider-session")
 }
 
 pub fn profile_response_decodes_username_and_avatar_test() {
   let body =
     "{\"user\":{\"id\":\"user-1\",\"email\":\"user@example.com\",\"username\":\"sentry\",\"firstName\":null,\"lastName\":null,\"avatarUrl\":\"https://cdn.example/avatar.png\"}}"
-  let assert Ok(profile) = dobrunia_auth.decode_profile(body)
+  let assert Ok(user) = dobrunia.decode_user(body)
 
-  profile.username |> should.equal(option.Some("sentry"))
-  profile.avatar_url
+  user.username |> should.equal(option.Some("sentry"))
+  user.avatar_url
   |> should.equal(option.Some("https://cdn.example/avatar.png"))
 }
 
 pub fn refresh_response_decodes_rotated_pair_without_user_test() {
   let body = "{\"accessToken\":\"new-access\",\"refreshToken\":\"new-refresh\"}"
-  let assert Ok(tokens) = dobrunia_auth.decode_token_pair(body)
+  let assert Ok(tokens) = dobrunia.decode_token_pair(body)
 
   tokens.access_token |> should.equal("new-access")
   tokens.refresh_token |> should.equal("new-refresh")
 }
 
 pub fn malformed_provider_response_is_rejected_test() {
-  dobrunia_auth.decode_tokens(
+  dobrunia.decode_tokens(
     "{\"accessToken\":\"access\",\"refreshToken\":\"refresh\",\"user\":{}}",
   )
   |> should.equal(Error(Nil))

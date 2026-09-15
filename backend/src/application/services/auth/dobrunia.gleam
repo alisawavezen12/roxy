@@ -1,29 +1,18 @@
+import application/services/user
 import config/auth
 import gleam/dynamic/decode
 import gleam/http
 import gleam/http/request
 import gleam/httpc
 import gleam/json
-import gleam/option.{type Option}
+import gleam/option
 import gleam/result
 import gleam/uri
-
-pub type User {
-  User(
-    id: String,
-    email: String,
-    username: Option(String),
-    first_name: Option(String),
-    last_name: Option(String),
-    avatar_url: Option(String),
-  )
-}
 
 pub type Tokens {
   Tokens(
     access_token: String,
     refresh_token: String,
-    user: User,
     provider_session_id: String,
   )
 }
@@ -78,7 +67,7 @@ pub fn exchange_code(
   )
 }
 
-pub fn profile(access_token: String) -> Result(User, Error) {
+pub fn user(access_token: String) -> Result(user.User, Error) {
   use http_request <- result.try(
     request.to(auth.provider_base_url <> "/auth/me")
     |> result.map_error(fn(_) { Configuration }),
@@ -161,7 +150,7 @@ pub fn decode_tokens(body: String) -> Result(Tokens, Nil) {
   |> result.map_error(fn(_) { Nil })
 }
 
-pub fn decode_profile(body: String) -> Result(User, Nil) {
+pub fn decode_user(body: String) -> Result(user.User, Nil) {
   json.parse(body, profile_decoder())
   |> result.map_error(fn(_) { Nil })
 }
@@ -174,14 +163,8 @@ pub fn decode_token_pair(body: String) -> Result(TokenPair, Nil) {
 fn tokens_decoder() -> decode.Decoder(Tokens) {
   use access_token <- decode.field("accessToken", decode.string)
   use refresh_token <- decode.field("refreshToken", decode.string)
-  use user <- decode.field("user", user_decoder())
   use provider_session_id <- decode.field("session", session_decoder())
-  decode.success(Tokens(
-    access_token:,
-    refresh_token:,
-    user:,
-    provider_session_id:,
-  ))
+  decode.success(Tokens(access_token:, refresh_token:, provider_session_id:))
 }
 
 fn token_pair_decoder() -> decode.Decoder(TokenPair) {
@@ -190,7 +173,7 @@ fn token_pair_decoder() -> decode.Decoder(TokenPair) {
   decode.success(TokenPair(access_token:, refresh_token:))
 }
 
-fn user_decoder() -> decode.Decoder(User) {
+fn user_decoder() -> decode.Decoder(user.User) {
   use id <- decode.field("id", decode.string)
   use email <- decode.field("email", decode.string)
   use username <- decode.optional_field(
@@ -213,7 +196,7 @@ fn user_decoder() -> decode.Decoder(User) {
     option.None,
     decode.optional(decode.string),
   )
-  decode.success(User(
+  decode.success(user.User(
     id:,
     email:,
     username:,
@@ -223,7 +206,7 @@ fn user_decoder() -> decode.Decoder(User) {
   ))
 }
 
-fn profile_decoder() -> decode.Decoder(User) {
+fn profile_decoder() -> decode.Decoder(user.User) {
   decode.field("user", user_decoder(), decode.success)
 }
 

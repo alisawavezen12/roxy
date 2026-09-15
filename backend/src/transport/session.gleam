@@ -1,6 +1,6 @@
 import application/access
 import application/dependencies as app_dependencies
-import application/services/session as session_service
+import application/services/auth/session as session_service
 
 import config/session as session_config
 import gleam/http/cookie

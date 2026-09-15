@@ -1,4 +1,4 @@
-import application/services/session
+import application/services/auth/session
 import gleam/bit_array
 import gleam/crypto
 import gleeunit/should

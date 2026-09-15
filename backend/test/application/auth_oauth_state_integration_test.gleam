@@ -1,4 +1,4 @@
-import application/services/oauth_state
+import application/services/auth/oauth_state
 import config/environment
 import db/config as db_config
 import db/defaults
@@ -44,14 +44,14 @@ fn run_with_database() -> Nil {
               "/user/example?tab=posts",
               config.query_timeout,
             )
-          let assert Ok(oauth_state.InvalidPath) =
+          let assert Ok(oauth_state.NotFound) =
             oauth_state.consume(
               connection,
               state,
               "wrong-binding",
               config.query_timeout,
             )
-          let assert Ok(oauth_state.ReturnPath(return_path)) =
+          let assert Ok(oauth_state.ReturnTo(return_path)) =
             oauth_state.consume(
               connection,
               state,
@@ -59,7 +59,7 @@ fn run_with_database() -> Nil {
               config.query_timeout,
             )
           return_path |> should.equal("/user/example?tab=posts")
-          let assert Ok(oauth_state.InvalidPath) =
+          let assert Ok(oauth_state.NotFound) =
             oauth_state.consume(
               connection,
               state,
@@ -68,7 +68,7 @@ fn run_with_database() -> Nil {
             )
           let assert Ok(#(expired_state, expired_binding)) =
             oauth_state.create(connection, -1, "/", config.query_timeout)
-          let assert Ok(oauth_state.InvalidPath) =
+          let assert Ok(oauth_state.NotFound) =
             oauth_state.consume(
               connection,
               expired_state,

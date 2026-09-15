@@ -1,8 +1,8 @@
 import application/dependencies
-import application/services/authentication
-import application/services/dobrunia_auth
-import application/services/oauth_state
-import application/services/session as session_service
+import application/services/auth/authentication
+import application/services/auth/dobrunia
+import application/services/auth/oauth_state
+import application/services/auth/session as session_service
 import application/services/user
 import config/auth
 import config/session as session_config
@@ -44,7 +44,7 @@ pub fn start(
   {
     Error(_) -> database_error(context)
     Ok(#(state, binding)) ->
-      case dobrunia_auth.authorize_url(config.auth, state) {
+      case dobrunia.authorize_url(config.auth, state) {
         Error(_) -> provider_error(context)
         Ok(url) ->
           wisp.redirect(to: url)
@@ -130,7 +130,7 @@ pub fn refresh(
         )
       {
         Ok(Nil) -> wisp.no_content()
-        Error(authentication.Auth(dobrunia_auth.Rejected(401)))
+        Error(authentication.Auth(dobrunia.Rejected(401)))
         | Error(authentication.InvalidStoredToken) ->
           clear_invalid_session(http_request, dependencies, context)
         Error(authentication.Auth(_)) -> provider_error(context)
@@ -158,10 +158,10 @@ fn complete_callback(
     )
   {
     Error(_) -> redirect_error(base_response, config.auth, "/", "server_error")
-    Ok(oauth_state.InvalidPath) ->
+    Ok(oauth_state.NotFound) ->
       redirect_error(base_response, config.auth, "/", "invalid_callback")
-    Ok(oauth_state.ReturnPath(return_to)) ->
-      case dobrunia_auth.exchange_code(config.auth, code) {
+    Ok(oauth_state.ReturnTo(return_to)) ->
+      case dobrunia.exchange_code(config.auth, code) {
         Error(_) ->
           redirect_error(
             base_response,
@@ -170,7 +170,7 @@ fn complete_callback(
             "provider_error",
           )
         Ok(tokens) ->
-          case dobrunia_auth.profile(tokens.access_token) {
+          case dobrunia.user(tokens.access_token) {
             Error(_) ->
               redirect_error(
                 base_response,
@@ -198,8 +198,8 @@ fn persist_login(
   dependencies: dependencies.Dependencies,
   _context: transport_context.TransportContext,
   base_response: wisp.Response,
-  tokens: dobrunia_auth.Tokens,
-  profile: dobrunia_auth.User,
+  tokens: dobrunia.Tokens,
+  authenticated_user: user.User,
   return_to: String,
 ) -> wisp.Response {
   let config = dependencies.config
@@ -209,14 +209,7 @@ fn persist_login(
     pog.transaction(dependencies.postgres, fn(connection) {
       use user_id <- result.try(user.upsert(
         connection,
-        user.Profile(
-          id: profile.id,
-          email: profile.email,
-          username: profile.username,
-          first_name: profile.first_name,
-          last_name: profile.last_name,
-          avatar_url: profile.avatar_url,
-        ),
+        authenticated_user,
         config.postgres.query_timeout,
       ))
       session_service.create_with_provider(

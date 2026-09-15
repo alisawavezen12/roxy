@@ -2,8 +2,8 @@ import gleam/dynamic/decode
 import gleam/option.{type Option}
 import pog
 
-pub type Profile {
-  Profile(
+pub type User {
+  User(
     id: String,
     email: String,
     username: Option(String),
@@ -15,19 +15,19 @@ pub type Profile {
 
 pub fn upsert(
   connection: pog.Connection,
-  profile: Profile,
+  user: User,
   timeout: Int,
 ) -> Result(String, pog.QueryError) {
   let query =
     pog.query(
       "insert into users (id, dobrunia_user_id, email, username, first_name, last_name, avatar_url) values ($1, $1, $2, $3, $4, $5, $6) on conflict (dobrunia_user_id) do update set email = excluded.email, username = excluded.username, first_name = excluded.first_name, last_name = excluded.last_name, avatar_url = excluded.avatar_url, updated_at = now() returning id",
     )
-    |> pog.parameter(pog.text(profile.id))
-    |> pog.parameter(pog.text(profile.email))
-    |> pog.parameter(pog.nullable(pog.text, profile.username))
-    |> pog.parameter(pog.nullable(pog.text, profile.first_name))
-    |> pog.parameter(pog.nullable(pog.text, profile.last_name))
-    |> pog.parameter(pog.nullable(pog.text, profile.avatar_url))
+    |> pog.parameter(pog.text(user.id))
+    |> pog.parameter(pog.text(user.email))
+    |> pog.parameter(pog.nullable(pog.text, user.username))
+    |> pog.parameter(pog.nullable(pog.text, user.first_name))
+    |> pog.parameter(pog.nullable(pog.text, user.last_name))
+    |> pog.parameter(pog.nullable(pog.text, user.avatar_url))
     |> pog.returning(decode.subfield([0], decode.string, decode.success))
     |> pog.timeout(timeout)
   case pog.execute(query, connection) {

@@ -67,9 +67,11 @@ Local user profiles linked to Dobrunia Auth.
 | `bio` | Optional Roxy-owned biography; it is not overwritten by SSO sync |
 | `created_at`, `updated_at` | Local timestamps |
 
-On each successful OAuth login, the backend requests Dobrunia `/auth/me`, then
-inserts the user or updates all supported profile fields. Deleting a local user
-cascades to all of their local sessions.
+On the first successful OAuth login, the backend requests Dobrunia `/auth/me`
+and inserts the local user. Later OAuth logins and explicit profile syncs update
+the supported external profile fields and the local `updated_at`; local
+`created_at` remains the registration time. Deleting a local user cascades to
+all of their local sessions.
 
 ### `sessions`
 

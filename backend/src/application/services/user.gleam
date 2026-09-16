@@ -53,7 +53,7 @@ pub fn sync_identity(
 ) -> Result(Nil, pog.QueryError) {
   let query =
     pog.query(
-      "update users set email = $3, username = $4, first_name = $5, last_name = $6, avatar_url = $7, external_created_at = $8::timestamptz, external_updated_at = $9::timestamptz, updated_at = now() where id = $1 and dobrunia_user_id = $2",
+      "update users set email = $3, username = $4, first_name = $5, last_name = $6, avatar_url = $7, updated_at = now() where id = $1 and dobrunia_user_id = $2",
     )
     |> pog.parameter(pog.text(local_user_id))
     |> pog.parameter(pog.text(user.id))
@@ -62,8 +62,6 @@ pub fn sync_identity(
     |> pog.parameter(pog.nullable(pog.text, user.first_name))
     |> pog.parameter(pog.nullable(pog.text, user.last_name))
     |> pog.parameter(pog.nullable(pog.text, user.avatar_url))
-    |> pog.parameter(pog.nullable(pog.text, user.created_at))
-    |> pog.parameter(pog.nullable(pog.text, user.updated_at))
     |> pog.timeout(timeout)
   case pog.execute(query, connection) {
     Ok(pog.Returned(count: 1, ..)) -> Ok(Nil)
@@ -79,7 +77,7 @@ pub fn upsert_identity(
 ) -> Result(String, pog.QueryError) {
   let query =
     pog.query(
-      "insert into users (id, dobrunia_user_id, email, username, first_name, last_name, avatar_url, external_created_at, external_updated_at) values ($1, $1, $2, $3, $4, $5, $6, $7::timestamptz, $8::timestamptz) on conflict (dobrunia_user_id) do update set email = excluded.email, username = excluded.username, first_name = excluded.first_name, last_name = excluded.last_name, avatar_url = excluded.avatar_url, external_created_at = excluded.external_created_at, external_updated_at = excluded.external_updated_at, updated_at = now() returning id",
+      "insert into users (id, dobrunia_user_id, email, username, first_name, last_name, avatar_url) values ($1, $1, $2, $3, $4, $5, $6) on conflict (dobrunia_user_id) do update set email = excluded.email, username = excluded.username, first_name = excluded.first_name, last_name = excluded.last_name, avatar_url = excluded.avatar_url, updated_at = now() returning id",
     )
     |> pog.parameter(pog.text(user.id))
     |> pog.parameter(pog.text(user.email))
@@ -87,8 +85,6 @@ pub fn upsert_identity(
     |> pog.parameter(pog.nullable(pog.text, user.first_name))
     |> pog.parameter(pog.nullable(pog.text, user.last_name))
     |> pog.parameter(pog.nullable(pog.text, user.avatar_url))
-    |> pog.parameter(pog.nullable(pog.text, user.created_at))
-    |> pog.parameter(pog.nullable(pog.text, user.updated_at))
     |> pog.returning(decode.subfield([0], decode.string, decode.success))
     |> pog.timeout(timeout)
   case pog.execute(query, connection) {

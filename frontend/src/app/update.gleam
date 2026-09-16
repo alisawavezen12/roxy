@@ -8,14 +8,15 @@ import app/message.{
 }
 import app/model.{
   type Model, Authenticated, BioIdle, BioSaving, Checking, LoggingOut,
-  LogoutIdle, Model, Notification, NotificationError, SyncIdle, SyncSucceeded,
-  Syncing, Unauthenticated, Unavailable, UserLoadFailed,
+  LogoutIdle, Model, Notification, NotificationError, NotificationSuccess,
+  SyncIdle, SyncSucceeded, Syncing, Unauthenticated, Unavailable, UserLoadFailed,
   UserLoaded as UserLoadedState, UserLoading, UserNotFound,
 }
 import gleam/option
 import gleam/string
 import lustre/effect.{type Effect}
 import modules/authenticated_user/authenticated_user
+import modules/settings/settings
 import routes/route.{type Route, User}
 import shared/api/error as api_error
 import shared/user as shared_user
@@ -120,7 +121,7 @@ fn sync_profile(model: Model) -> #(Model, Effect(Message)) {
     Syncing -> #(model, effect.none())
     _ -> #(
       Model(..model, sync_state: Syncing),
-      authenticated_user.sync_profile()
+      settings.sync_profile()
         |> effect.map(SyncFinished),
     )
   }
@@ -157,7 +158,7 @@ fn logout(model: Model) -> #(Model, Effect(Message)) {
     LoggingOut -> #(model, effect.none())
     LogoutIdle -> #(
       Model(..model, logout_state: LoggingOut),
-      authenticated_user.logout()
+      settings.logout()
         |> effect.map(LogoutFinished),
     )
   }
@@ -204,20 +205,36 @@ fn apply_bio_result(
   result: user_api.SaveBioResult,
 ) -> #(Model, Effect(Message)) {
   case result {
-    user_api.BioSaved(profile) -> #(
-      Model(
-        ..model,
-        auth: Authenticated(profile),
-        user_page: synced_user_page(model, profile),
-        bio: bio_value(profile),
-        saved_bio: bio_value(profile),
-        bio_state: BioIdle,
-      ),
-      effect.none(),
-    )
+    user_api.BioSaved(profile) ->
+      show_success(
+        Model(
+          ..model,
+          auth: Authenticated(profile),
+          user_page: synced_user_page(model, profile),
+          bio: bio_value(profile),
+          saved_bio: bio_value(profile),
+          bio_state: BioIdle,
+        ),
+        "Bio saved successfully.",
+      )
     user_api.BioSaveFailed(message) ->
       show_error(Model(..model, bio_state: BioIdle), message)
   }
+}
+
+fn show_success(model: Model, message: String) -> #(Model, Effect(Message)) {
+  #(
+    Model(
+      ..model,
+      notification: option.Some(Notification(
+        NotificationSuccess,
+        message,
+        message,
+      )),
+    ),
+    notification.dismiss_after()
+      |> effect.map(fn(_) { NotificationExpired }),
+  )
 }
 
 fn show_error(model: Model, message: String) -> #(Model, Effect(Message)) {

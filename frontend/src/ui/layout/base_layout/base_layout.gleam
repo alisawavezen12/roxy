@@ -1,4 +1,4 @@
-import app/message.{type Message}
+import app/message.{type Message, OpenSettingsModal}
 import app/model.{
   type AuthState, type BioState, type LogoutState, type SyncState,
 }
@@ -6,6 +6,7 @@ import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
 import modules/authenticated_user/authenticated_user
+import modules/settings/settings
 
 pub fn view(
   content: Element(Message),
@@ -24,11 +25,12 @@ pub fn view(
       attribute.href("/ui/layout/base_layout/base_layout.css"),
     ]),
     authenticated_user.stylesheet(),
+    settings.stylesheet(),
     html.div([attribute.class("layout")], [
       html.div([attribute.class("layout__sidebar")], [
-        authenticated_user.view(
+        authenticated_user.view(auth, auth_modal_open, OpenSettingsModal),
+        settings.view(
           auth,
-          auth_modal_open,
           settings_modal_open,
           sync_state,
           logout_state,

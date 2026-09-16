@@ -1,5 +1,6 @@
 import gleam/dynamic/decode
 import gleam/option.{type Option}
+import gleam/string
 import pog
 import shared/user.{type User, User}
 
@@ -18,6 +19,28 @@ pub fn find(
   case pog.execute(query, connection) {
     Ok(pog.Returned(rows: [user, ..], ..)) -> Ok(option.Some(user))
     Ok(_) -> Ok(option.None)
+    Error(error) -> Error(error)
+  }
+}
+
+pub fn update_bio(
+  connection: pog.Connection,
+  local_user_id: String,
+  bio: String,
+  timeout: Int,
+) -> Result(Nil, pog.QueryError) {
+  let bio = case string.trim(bio) {
+    "" -> option.None
+    value -> option.Some(value)
+  }
+  let query =
+    pog.query("update users set bio = $2, updated_at = now() where id = $1")
+    |> pog.parameter(pog.text(local_user_id))
+    |> pog.parameter(pog.nullable(pog.text, bio))
+    |> pog.timeout(timeout)
+  case pog.execute(query, connection) {
+    Ok(pog.Returned(count: 1, ..)) -> Ok(Nil)
+    Ok(_) -> Error(pog.UnexpectedResultType([]))
     Error(error) -> Error(error)
   }
 }

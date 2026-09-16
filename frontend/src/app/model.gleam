@@ -1,3 +1,4 @@
+import gleam/option.{type Option}
 import routes/route.{type Route}
 import shared/user.{type User}
 
@@ -31,6 +32,20 @@ pub type LogoutState {
   LoggingOut
 }
 
+pub type BioState {
+  BioIdle
+  BioSaving
+}
+
+pub type NotificationKind {
+  NotificationSuccess
+  NotificationError
+}
+
+pub type Notification {
+  Notification(kind: NotificationKind, message: String, tooltip: String)
+}
+
 pub type Model {
   Model(
     route: Route,
@@ -41,6 +56,10 @@ pub type Model {
     settings_modal_open: Bool,
     sync_state: SyncState,
     logout_state: LogoutState,
+    bio: String,
+    saved_bio: String,
+    bio_state: BioState,
+    notification: Option(Notification),
     post_content: String,
   )
 }

@@ -51,4 +51,7 @@
   --transition-fast: 120ms ease;
   --transition-normal: 200ms ease;
   --transition-long: 320ms ease;
+
+  /* Textarea */
+  --textarea-height: 120px;
 }

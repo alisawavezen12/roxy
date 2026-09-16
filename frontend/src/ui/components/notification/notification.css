@@ -1,0 +1,24 @@
+.notification {
+  position: fixed;
+  z-index: 1100;
+  right: var(--space-5);
+  bottom: var(--space-5);
+  max-width: min(24rem, calc(100vw - 2rem));
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--button-radius);
+  box-shadow: 0 0.75rem 2rem rgb(0 0 0 / 25%);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  line-height: 1.4;
+}
+
+.notification--success {
+  border-color: var(--color-success);
+  background: var(--color-surface-hover);
+}
+
+.notification--error {
+  border-color: var(--color-danger);
+  background: var(--color-surface-hover);
+}

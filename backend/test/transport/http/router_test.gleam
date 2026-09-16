@@ -1,4 +1,5 @@
 import application/dependencies
+import application/services/profile
 import config/app
 import config/auth
 import config/defaults as config_defaults
@@ -185,6 +186,50 @@ pub fn sso_start_without_database_returns_internal_error_test() {
   response.status |> should.equal(status.internal_server_error)
 }
 
+pub fn bio_at_maximum_length_is_valid_test() {
+  profile.validate_bio(string.repeat("x", 300))
+  |> should.equal(profile.BioValid)
+}
+
+pub fn bio_over_maximum_length_is_rejected_test() {
+  profile.validate_bio(string.repeat("x", 301))
+  |> should.equal(profile.BioTooLong)
+}
+
+pub fn auth_profile_with_invalid_body_requires_authentication_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Patch)
+    |> request.set_path("/auth/profile")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_header("content-type", "application/json")
+    |> request.set_body(wisp.create_canned_connection(
+      <<"{\"bio\":123}">>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status |> should.equal(status.unauthorized)
+}
+
+pub fn auth_profile_without_session_returns_unauthorized_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Patch)
+    |> request.set_path("/auth/profile")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_header("content-type", "application/json")
+    |> request.set_body(wisp.create_canned_connection(
+      <<"{\"bio\":\"Hello\"}">>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status |> should.equal(status.unauthorized)
+}
+
 pub fn auth_sync_without_session_returns_unauthorized_test() {
   let request =
     request.new()
@@ -367,7 +412,7 @@ pub fn valid_preflight_returns_explicit_policy_test() {
   |> should.equal(Ok("true"))
 
   list.key_find(response.headers, "access-control-allow-methods")
-  |> should.equal(Ok("GET, HEAD"))
+  |> should.equal(Ok("GET, HEAD, PATCH"))
 
   list.key_find(response.headers, "access-control-allow-headers")
   |> should.equal(Ok("Content-Type"))

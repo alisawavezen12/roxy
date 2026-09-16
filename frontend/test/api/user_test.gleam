@@ -22,6 +22,25 @@ pub fn current_user_maps_unauthorized_test() {
   |> should.equal(auth.SignedOut)
 }
 
+pub fn save_bio_decodes_updated_profile_test() {
+  let assert user.BioSaved(profile) = user.decode_save_bio(status.ok, body)
+
+  profile.bio |> should.equal(option.Some("Building things"))
+}
+
+pub fn save_bio_decodes_shared_length_error_test() {
+  let body =
+    "{\"error\":{\"code\":\"bio_too_long\",\"message\":\"Bio must be 300 characters or fewer.\",\"request_id\":\"req_test\"}}"
+
+  user.decode_save_bio(status.bad_request, body)
+  |> should.equal(user.BioSaveFailed("Bio must be 300 characters or fewer."))
+}
+
+pub fn save_bio_maps_failure_status_to_failure_test() {
+  user.decode_save_bio(status.internal_server_error, "")
+  |> should.equal(user.BioSaveFailed("Unable to save bio. Please try again."))
+}
+
 pub fn logout_maps_no_content_to_success_test() {
   auth.decode_logout(status.no_content)
   |> should.equal(auth.LoggedOut)

@@ -8,6 +8,7 @@ import gleam/option
 import gleam/string
 
 import transport/http/handlers/auth/me
+import transport/http/handlers/auth/profile
 import transport/http/handlers/auth/sso
 import transport/http/handlers/auth/sync
 import transport/http/handlers/health
@@ -56,6 +57,13 @@ const routes = [
     body: request_body.NoBody,
     access: access.Authenticated,
     handler: sync_route,
+  ),
+  Route(
+    path: "/auth/profile",
+    methods: [http.Patch],
+    body: request_body.Json,
+    access: access.Authenticated,
+    handler: profile_route,
   ),
   Route(
     path: "/auth/sso",
@@ -200,6 +208,18 @@ fn sync_route(
   _body: request_body.ParsedBody,
 ) -> wisp.Response {
   sync.handle(request, dependencies, context)
+}
+
+fn profile_route(
+  _request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  body: request_body.ParsedBody,
+) -> wisp.Response {
+  case body {
+    request_body.JsonBody(json) -> profile.handle(dependencies, context, json)
+    _ -> profile.handle(dependencies, context, "")
+  }
 }
 
 fn sso_start_route(

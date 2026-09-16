@@ -10,30 +10,7 @@
   text-align: left;
 }
 
-.post-composer__input {
-  width: 100%;
-  min-height: 7.5rem;
-  max-height: 7.5rem;
-  padding: var(--space-3);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-surface);
-  color: var(--color-text);
-  line-height: 1.5;
-  height: 7.5rem;
-  resize: none;
-}
 
-.post-composer__input::placeholder {
-  color: var(--color-text-muted);
-}
-
-.post-composer__input:focus,
-.post-composer__input:focus-visible,
-.post-composer__input:active {
-  outline: none;
-  border-color: var(--color-border);
-}
 
 .post-composer__actions {
   display: flex;

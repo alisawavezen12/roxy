@@ -5,6 +5,9 @@ import app/model
 pub type Message {
   AuthChecked(auth.CurrentUserResult)
   UserLoaded(user.Result)
+  BioChanged(String)
+  SaveBio
+  BioSaved(user.SaveBioResult)
   PostContentChanged(String)
   SelectUserTab(model.UserTab)
   OpenAuthModal
@@ -16,5 +19,6 @@ pub type Message {
   SyncFinished(auth.CurrentUserResult)
   Logout
   LogoutFinished(auth.LogoutResult)
+  NotificationExpired
   NoOp
 }

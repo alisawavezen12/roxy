@@ -22,6 +22,9 @@
   --color-accent-hover: #f8c0ef;
 
 
+  /* Success */
+  --color-success: #76d69a;
+
   /* Danger */
   --color-danger: #ef6a7a;
   --color-danger-hover: #f27f8c;

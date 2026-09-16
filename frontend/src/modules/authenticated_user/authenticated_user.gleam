@@ -1,21 +1,26 @@
 import api/auth/auth
 import app/message.{
-  type Message, CloseAuthModal, CloseSettingsModal, Logout, NoOp, OpenAuthModal,
-  OpenSettingsModal, StartSsoLogin, SyncProfile,
+  type Message, BioChanged, CloseAuthModal, CloseSettingsModal, Logout, NoOp,
+  OpenAuthModal, OpenSettingsModal, SaveBio, StartSsoLogin, SyncProfile,
 }
 import app/model.{
-  type AuthState, type LogoutState, type SyncState, Authenticated, Checking,
-  LoggingOut, LogoutIdle, SyncIdle, SyncSucceeded, Syncing, Unavailable,
+  type AuthState, type BioState, type LogoutState, type SyncState, Authenticated,
+  BioIdle, BioSaving, Checking, LoggingOut, LogoutIdle, SyncIdle, SyncSucceeded,
+  Syncing, Unavailable,
 }
+import gleam/int
 import gleam/option
+import gleam/string
 import lustre/attribute
 import lustre/effect.{type Effect}
-import lustre/element.{type Element}
+import lustre/element.{type Element, element}
 import lustre/element/html
 import lustre/event
+import shared/api/error as api_error
 import shared/user
 import ui/components/button/button
 import ui/components/modal/modal
+import ui/components/textarea/textarea
 
 pub fn load() -> Effect(auth.CurrentUserResult) {
   auth.load_current_user()
@@ -45,6 +50,7 @@ pub fn stylesheet() -> Element(message) {
     ]),
     button.stylesheet(),
     modal.stylesheet(),
+    textarea.stylesheet(),
   ])
 }
 
@@ -54,6 +60,9 @@ pub fn view(
   settings_modal_open: Bool,
   sync_state: SyncState,
   logout_state: LogoutState,
+  bio: String,
+  saved_bio: String,
+  bio_state: BioState,
 ) -> Element(Message) {
   html.div([], [
     html.aside([attribute.class("authenticated-user")], content(auth_state)),
@@ -63,6 +72,9 @@ pub fn view(
       auth_state,
       sync_state,
       logout_state,
+      bio,
+      saved_bio,
+      bio_state,
     ),
   ])
 }
@@ -120,6 +132,9 @@ fn settings_modal_view(
   auth_state: AuthState,
   sync_state: SyncState,
   logout_state: LogoutState,
+  bio: String,
+  saved_bio: String,
+  bio_state: BioState,
 ) -> Element(Message) {
   case modal_open, auth_state {
     True, Authenticated(_profile) ->
@@ -128,7 +143,13 @@ fn settings_modal_view(
         close_label: "Close settings dialog",
         on_close: CloseSettingsModal,
         on_ignore: NoOp,
-        children: settings_content(sync_state, logout_state),
+        children: settings_content(
+          sync_state,
+          logout_state,
+          bio,
+          saved_bio,
+          bio_state,
+        ),
       ))
     _, _ -> html.div([], [])
   }
@@ -137,6 +158,9 @@ fn settings_modal_view(
 fn settings_content(
   sync_state: SyncState,
   logout_state: LogoutState,
+  bio: String,
+  saved_bio: String,
+  bio_state: BioState,
 ) -> List(Element(Message)) {
   let sync_label = case sync_state {
     Syncing -> "Synchronizing..."
@@ -149,28 +173,61 @@ fn settings_content(
   }
   [
     html.div([attribute.class("authenticated-user__settings-section")], [
-      html.p([attribute.class("authenticated-user__settings-copy")], [
-        html.text("To change your avatar or username, go to "),
-        html.a(
-          [
-            attribute.class("authenticated-user__profile-link"),
-            attribute.href("https://auth.dobrunia.guru/profile"),
-            attribute.attribute("target", "_blank"),
-            attribute.attribute("rel", "noopener noreferrer"),
-          ],
-          [html.text("Dobrunia profile")],
-        ),
-        html.text(
-          " and update your profile there. Then synchronize to update your username, avatar, first name, and last name in Roxy.",
-        ),
+      html.div([attribute.class("authenticated-user__profile-sync")], [
+        html.p([attribute.class("authenticated-user__settings-copy")], [
+          html.text("To change your avatar or username, go to "),
+          html.a(
+            [
+              attribute.class("authenticated-user__profile-link"),
+              attribute.href("https://auth.dobrunia.guru/profile"),
+              attribute.attribute("target", "_blank"),
+              attribute.attribute("rel", "noopener noreferrer"),
+            ],
+            [html.text("Dobrunia profile")],
+          ),
+          html.text(
+            " and update your profile there. Then synchronize to update your username, avatar, first name, and last name in Roxy.",
+          ),
+        ]),
+        button.view(button.Config(
+          label: sync_label,
+          size: button.Medium,
+          variant: sync_icon,
+          on_click: SyncProfile,
+          disabled: is_syncing(sync_state),
+        )),
       ]),
-      button.view(button.Config(
-        label: sync_label,
-        size: button.Medium,
-        variant: sync_icon,
-        on_click: SyncProfile,
-        disabled: is_syncing(sync_state),
-      )),
+      html.div([attribute.class("authenticated-user__bio-section")], [
+        element("label", [attribute.class("authenticated-user__bio-label")], [
+          html.text("Bio"),
+        ]),
+        textarea.view(
+          textarea.Config(
+            value: bio,
+            placeholder: "Tell people about yourself",
+            label: "Bio",
+            on_input: BioChanged,
+            on_keydown: fn(key) {
+              case key {
+                "Escape" -> CloseSettingsModal
+                _ -> NoOp
+              }
+            },
+          ),
+        ),
+        html.p([attribute.class(bio_counter_class(bio))], [
+          html.text(bio_counter(bio)),
+        ]),
+        button.view(button.Config(
+          label: bio_save_label(bio_state),
+          size: button.Small,
+          variant: button.Primary,
+          on_click: SaveBio,
+          disabled: is_bio_saving(bio_state)
+            || bio == saved_bio
+            || string.length(bio) > api_error.bio_max_length,
+        )),
+      ]),
     ]),
     html.div([attribute.class("authenticated-user__settings-logout")], [
       button.view(button.Config(
@@ -182,6 +239,34 @@ fn settings_content(
       )),
     ]),
   ]
+}
+
+fn bio_counter(bio: String) -> String {
+  int.to_string(string.length(bio))
+  <> " / "
+  <> int.to_string(api_error.bio_max_length)
+}
+
+fn bio_counter_class(bio: String) -> String {
+  case string.length(bio) > api_error.bio_max_length {
+    True ->
+      "authenticated-user__bio-counter authenticated-user__bio-counter--invalid"
+    False -> "authenticated-user__bio-counter"
+  }
+}
+
+fn bio_save_label(bio_state: BioState) -> String {
+  case bio_state {
+    BioSaving -> "Saving..."
+    BioIdle -> "Save bio"
+  }
+}
+
+fn is_bio_saving(bio_state: BioState) -> Bool {
+  case bio_state {
+    BioSaving -> True
+    BioIdle -> False
+  }
 }
 
 fn logout_label(logout_state: LogoutState) -> String {

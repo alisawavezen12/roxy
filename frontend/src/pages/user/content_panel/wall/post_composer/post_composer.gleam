@@ -1,32 +1,33 @@
 import app/message.{type Message, NoOp, PostContentChanged}
 import gleam/string
 import lustre/attribute
-import lustre/element.{type Element, element}
+import lustre/element.{type Element}
 import lustre/element/html
-import lustre/event
 import ui/components/button/button
+import ui/components/textarea/textarea
 
 pub fn stylesheet() -> Element(message) {
-  html.link([
-    attribute.rel("stylesheet"),
-    attribute.href(
-      "/pages/user/content_panel/wall/post_composer/post_composer.css",
-    ),
+  html.div([], [
+    html.link([
+      attribute.rel("stylesheet"),
+      attribute.href(
+        "/pages/user/content_panel/wall/post_composer/post_composer.css",
+      ),
+    ]),
+    textarea.stylesheet(),
   ])
 }
 
 pub fn view(post_content: String) -> Element(Message) {
   html.section([attribute.class("post-composer")], [
-    element(
-      "textarea",
-      [
-        attribute.class("post-composer__input"),
-        attribute.attribute("placeholder", "Write a post…"),
-        attribute.attribute("aria-label", "Post content"),
-        attribute.attribute("rows", "1"),
-        event.on_input(PostContentChanged),
-      ],
-      [],
+    textarea.view(
+      textarea.Config(
+        value: post_content,
+        placeholder: "Write a post…",
+        label: "Post content",
+        on_input: PostContentChanged,
+        on_keydown: fn(_) { NoOp },
+      ),
     ),
     html.div([attribute.class("post-composer__actions")], [
       button.view(button.Config(

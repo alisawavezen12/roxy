@@ -1,19 +1,25 @@
 import api/auth/auth
 import api/user/user as user_api
 import app/message.{
-  type Message, AuthChecked, CloseAuthModal, CloseSettingsModal, Logout,
-  LogoutFinished, NoOp, OpenAuthModal, OpenSettingsModal, PostContentChanged,
-  SelectUserTab, StartSsoLogin, SyncFinished, SyncProfile, UserLoaded,
+  type Message, AuthChecked, BioChanged, BioSaved, CloseAuthModal,
+  CloseSettingsModal, Logout, LogoutFinished, NoOp, NotificationExpired,
+  OpenAuthModal, OpenSettingsModal, PostContentChanged, SaveBio, SelectUserTab,
+  StartSsoLogin, SyncFinished, SyncProfile, UserLoaded,
 }
 import app/model.{
-  type Model, Authenticated, Checking, LoggingOut, LogoutIdle, Model, SyncIdle,
-  SyncSucceeded, Syncing, Unauthenticated, Unavailable, UserLoadFailed,
+  type Model, Authenticated, BioIdle, BioSaving, Checking, LoggingOut,
+  LogoutIdle, Model, Notification, NotificationError, SyncIdle, SyncSucceeded,
+  Syncing, Unauthenticated, Unavailable, UserLoadFailed,
   UserLoaded as UserLoadedState, UserLoading, UserNotFound,
 }
+import gleam/option
+import gleam/string
 import lustre/effect.{type Effect}
 import modules/authenticated_user/authenticated_user
 import routes/route.{type Route, User}
+import shared/api/error as api_error
 import shared/user as shared_user
+import ui/components/notification/notification
 
 pub fn init(route: Route) -> #(Model, Effect(Message)) {
   #(
@@ -26,6 +32,10 @@ pub fn init(route: Route) -> #(Model, Effect(Message)) {
       settings_modal_open: False,
       sync_state: SyncIdle,
       logout_state: LogoutIdle,
+      bio: "",
+      saved_bio: "",
+      bio_state: BioIdle,
+      notification: option.None,
       post_content: "",
     ),
     load(route),
@@ -36,6 +46,13 @@ pub fn update(model: Model, message: Message) -> #(Model, Effect(Message)) {
   case message {
     AuthChecked(result) -> apply_auth_result(model, result)
     UserLoaded(result) -> apply_user_result(model, result)
+    BioChanged(bio) -> #(Model(..model, bio:), effect.none())
+    SaveBio -> save_bio(model)
+    BioSaved(result) -> apply_bio_result(model, result)
+    NotificationExpired -> #(
+      Model(..model, notification: option.None),
+      effect.none(),
+    )
     PostContentChanged(content) -> #(
       Model(..model, post_content: content),
       effect.none(),
@@ -78,7 +95,13 @@ fn apply_auth_result(
 ) -> #(Model, Effect(Message)) {
   case result {
     auth.SignedIn(user) -> #(
-      Model(..model, auth: Authenticated(user), auth_modal_open: False),
+      Model(
+        ..model,
+        auth: Authenticated(user),
+        bio: bio_value(user),
+        saved_bio: bio_value(user),
+        auth_modal_open: False,
+      ),
       effect.none(),
     )
     auth.SignedOut -> #(
@@ -112,23 +135,20 @@ fn apply_sync_result(
       Model(
         ..model,
         auth: Authenticated(profile),
+        bio: bio_value(profile),
+        saved_bio: bio_value(profile),
         user_page: synced_user_page(model, profile),
         sync_state: SyncSucceeded,
       ),
       effect.none(),
     )
-    auth.SignedOut -> #(
-      Model(..model, sync_state: SyncIdle),
-      authenticated_user.alert(
-        "Не удалось синхронизировать профиль. Сессия истекла.",
-      ),
-    )
-    auth.Failed -> #(
-      Model(..model, sync_state: SyncIdle),
-      authenticated_user.alert(
+    auth.SignedOut ->
+      show_error(model, "Не удалось синхронизировать профиль. Сессия истекла.")
+    auth.Failed ->
+      show_error(
+        model,
         "Не удалось синхронизировать профиль. Попробуйте ещё раз.",
-      ),
-    )
+      )
   }
 }
 
@@ -157,12 +177,72 @@ fn apply_logout_result(
       ),
       effect.none(),
     )
-    auth.LogoutFailed -> #(
-      Model(..model, logout_state: LogoutIdle),
-      authenticated_user.alert(
+    auth.LogoutFailed ->
+      show_error(
+        Model(..model, logout_state: LogoutIdle),
         "Не удалось выйти из аккаунта. Попробуйте ещё раз.",
+      )
+  }
+}
+
+fn save_bio(model: Model) -> #(Model, Effect(Message)) {
+  case model.bio_state {
+    BioSaving -> #(model, effect.none())
+    BioIdle ->
+      case bio_too_long(model.bio) {
+        True -> show_error(model, api_error.bio_too_long_message)
+        False -> #(
+          Model(..model, bio_state: BioSaving),
+          user_api.save_bio(model.bio) |> effect.map(BioSaved),
+        )
+      }
+  }
+}
+
+fn apply_bio_result(
+  model: Model,
+  result: user_api.SaveBioResult,
+) -> #(Model, Effect(Message)) {
+  case result {
+    user_api.BioSaved(profile) -> #(
+      Model(
+        ..model,
+        auth: Authenticated(profile),
+        user_page: synced_user_page(model, profile),
+        bio: bio_value(profile),
+        saved_bio: bio_value(profile),
+        bio_state: BioIdle,
       ),
+      effect.none(),
     )
+    user_api.BioSaveFailed(message) ->
+      show_error(Model(..model, bio_state: BioIdle), message)
+  }
+}
+
+fn show_error(model: Model, message: String) -> #(Model, Effect(Message)) {
+  #(
+    Model(
+      ..model,
+      notification: option.Some(Notification(
+        NotificationError,
+        message,
+        message,
+      )),
+    ),
+    notification.dismiss_after()
+      |> effect.map(fn(_) { NotificationExpired }),
+  )
+}
+
+fn bio_too_long(bio: String) -> Bool {
+  string.length(bio) > api_error.bio_max_length
+}
+
+fn bio_value(profile: shared_user.User) -> String {
+  case profile.bio {
+    option.Some(bio) -> bio
+    option.None -> ""
   }
 }
 

@@ -28,6 +28,12 @@ pub const invalid_body_code = "invalid_body"
 
 pub const invalid_body_message = "Invalid request body"
 
+pub const bio_max_length = 300
+
+pub const bio_too_long_code = "bio_too_long"
+
+pub const bio_too_long_message = "Bio must be 300 characters or fewer."
+
 pub const payload_too_large_code = "payload_too_large"
 
 pub const payload_too_large_message = "Request body is too large"

@@ -1,5 +1,7 @@
 import app/message.{type Message}
-import app/model.{type AuthState, type LogoutState, type SyncState}
+import app/model.{
+  type AuthState, type BioState, type LogoutState, type SyncState,
+}
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
@@ -12,6 +14,9 @@ pub fn view(
   settings_modal_open: Bool,
   sync_state: SyncState,
   logout_state: LogoutState,
+  bio: String,
+  saved_bio: String,
+  bio_state: BioState,
 ) -> Element(Message) {
   html.div([], [
     html.link([
@@ -27,6 +32,9 @@ pub fn view(
           settings_modal_open,
           sync_state,
           logout_state,
+          bio,
+          saved_bio,
+          bio_state,
         ),
       ]),
       html.div([attribute.class("layout__content")], [content]),

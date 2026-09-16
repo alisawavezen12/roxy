@@ -198,8 +198,13 @@ fn settings_content(
         )),
       ]),
       html.div([attribute.class("authenticated-user__bio-section")], [
-        element("label", [attribute.class("authenticated-user__bio-label")], [
-          html.text("Bio"),
+        html.div([attribute.class("authenticated-user__bio-heading")], [
+          element("label", [attribute.class("authenticated-user__bio-label")], [
+            html.text("Bio"),
+          ]),
+          html.p([attribute.class(bio_counter_class(bio))], [
+            html.text(bio_counter(bio)),
+          ]),
         ]),
         textarea.view(
           textarea.Config(
@@ -215,18 +220,23 @@ fn settings_content(
             },
           ),
         ),
-        html.p([attribute.class(bio_counter_class(bio))], [
-          html.text(bio_counter(bio)),
-        ]),
-        button.view(button.Config(
-          label: bio_save_label(bio_state),
-          size: button.Small,
-          variant: button.Primary,
-          on_click: SaveBio,
-          disabled: is_bio_saving(bio_state)
-            || bio == saved_bio
-            || string.length(bio) > api_error.bio_max_length,
-        )),
+        html.div(
+          [
+            attribute.class("authenticated-user__bio-save"),
+            event.prevent_default(event.on_mouse_down(NoOp)),
+          ],
+          [
+            button.view(button.Config(
+              label: bio_save_label(bio_state),
+              size: button.Small,
+              variant: button.Primary,
+              on_click: SaveBio,
+              disabled: is_bio_saving(bio_state)
+                || bio == saved_bio
+                || string.length(bio) > api_error.bio_max_length,
+            )),
+          ],
+        ),
       ]),
     ]),
     html.div([attribute.class("authenticated-user__settings-logout")], [

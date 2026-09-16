@@ -50,6 +50,12 @@ pub fn view(config: Config(message)) -> Element(message) {
           attribute.attribute("role", "dialog"),
           attribute.attribute("aria-modal", "true"),
           attribute.attribute("aria-labelledby", "modal-title"),
+          event.on_keydown(fn(key) {
+            case key {
+              "Escape" -> config.on_close
+              _ -> config.on_ignore
+            }
+          }),
         ],
         [
           html.div([attribute.class("modal__header")], [

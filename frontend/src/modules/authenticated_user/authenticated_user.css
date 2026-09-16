@@ -131,6 +131,13 @@
   text-align: left;
 }
 
+.authenticated-user__bio-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
 .authenticated-user__bio-label {
   color: var(--color-text);
   font-size: var(--font-size-sm);
@@ -152,6 +159,12 @@
 
 .authenticated-user__bio-counter--invalid {
   color: var(--color-danger);
+}
+
+.authenticated-user__bio-save {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--space-2);
 }
 
 .authenticated-user__settings-logout {

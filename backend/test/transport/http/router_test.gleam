@@ -185,6 +185,22 @@ pub fn sso_start_without_database_returns_internal_error_test() {
   response.status |> should.equal(status.internal_server_error)
 }
 
+pub fn auth_sync_without_session_returns_unauthorized_test() {
+  let request =
+    request.new()
+    |> request.set_method(http.Post)
+    |> request.set_path("/auth/sync")
+    |> request.set_header("origin", "http://localhost:1234")
+    |> request.set_body(wisp.create_canned_connection(
+      <<>>,
+      "test-secret-key-base-that-is-long-enough-for-wisp",
+    ))
+
+  let response = router.handle(request, test_dependencies())
+
+  response.status |> should.equal(status.unauthorized)
+}
+
 pub fn sso_refresh_requires_local_session_test() {
   let request =
     request.new()

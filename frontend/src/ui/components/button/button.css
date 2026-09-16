@@ -148,6 +148,10 @@
   animation: button-icon-send var(--transition-long) both;
 }
 
+.button--icon.icon--spin .button__icon {
+  animation: button-icon-spin 900ms linear infinite;
+}
+
 @keyframes button-icon-bounce {
   0% {
     transform: translateY(0);
@@ -159,6 +163,16 @@
 
   100% {
     transform: translateY(0);
+  }
+}
+
+@keyframes button-icon-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
   }
 }
 

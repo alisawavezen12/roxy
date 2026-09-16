@@ -20,6 +20,17 @@ pub type UserTab {
   Board
 }
 
+pub type SyncState {
+  SyncIdle
+  Syncing
+  SyncSucceeded
+}
+
+pub type LogoutState {
+  LogoutIdle
+  LoggingOut
+}
+
 pub type Model {
   Model(
     route: Route,
@@ -28,6 +39,8 @@ pub type Model {
     user_tab: UserTab,
     auth_modal_open: Bool,
     settings_modal_open: Bool,
+    sync_state: SyncState,
+    logout_state: LogoutState,
     post_content: String,
   )
 }

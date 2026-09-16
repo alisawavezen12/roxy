@@ -22,6 +22,16 @@ pub fn current_user_maps_unauthorized_test() {
   |> should.equal(auth.SignedOut)
 }
 
+pub fn logout_maps_no_content_to_success_test() {
+  auth.decode_logout(status.no_content)
+  |> should.equal(auth.LoggedOut)
+}
+
+pub fn logout_maps_other_status_to_failure_test() {
+  auth.decode_logout(status.internal_server_error)
+  |> should.equal(auth.LogoutFailed)
+}
+
 pub fn public_user_maps_found_and_not_found_test() {
   let assert user.Found(profile) = user.decode_response(status.ok, body)
   profile.email |> should.equal("person@example.com")

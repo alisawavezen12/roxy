@@ -19,5 +19,7 @@ pub fn view(model: Model) -> Element(Message) {
     model.auth,
     model.auth_modal_open,
     model.settings_modal_open,
+    model.sync_state,
+    model.logout_state,
   )
 }

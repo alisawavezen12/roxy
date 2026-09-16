@@ -22,6 +22,33 @@ pub fn find(
   }
 }
 
+pub fn sync_identity(
+  connection: pog.Connection,
+  local_user_id: String,
+  user: User,
+  timeout: Int,
+) -> Result(Nil, pog.QueryError) {
+  let query =
+    pog.query(
+      "update users set email = $3, username = $4, first_name = $5, last_name = $6, avatar_url = $7, external_created_at = $8::timestamptz, external_updated_at = $9::timestamptz, updated_at = now() where id = $1 and dobrunia_user_id = $2",
+    )
+    |> pog.parameter(pog.text(local_user_id))
+    |> pog.parameter(pog.text(user.id))
+    |> pog.parameter(pog.text(user.email))
+    |> pog.parameter(pog.nullable(pog.text, user.username))
+    |> pog.parameter(pog.nullable(pog.text, user.first_name))
+    |> pog.parameter(pog.nullable(pog.text, user.last_name))
+    |> pog.parameter(pog.nullable(pog.text, user.avatar_url))
+    |> pog.parameter(pog.nullable(pog.text, user.created_at))
+    |> pog.parameter(pog.nullable(pog.text, user.updated_at))
+    |> pog.timeout(timeout)
+  case pog.execute(query, connection) {
+    Ok(pog.Returned(count: 1, ..)) -> Ok(Nil)
+    Ok(_) -> Error(pog.UnexpectedResultType([]))
+    Error(error) -> Error(error)
+  }
+}
+
 pub fn upsert_identity(
   connection: pog.Connection,
   user: User,

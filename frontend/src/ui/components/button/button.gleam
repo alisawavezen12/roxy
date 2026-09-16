@@ -14,6 +14,7 @@ pub type IconAnimation {
   None
   Bounce
   Send
+  Spin
 }
 
 pub type Variant {
@@ -112,5 +113,6 @@ fn animation_name(animation: IconAnimation) -> String {
     None -> "none"
     Bounce -> "bounce"
     Send -> "send"
+    Spin -> "spin"
   }
 }

@@ -1,5 +1,5 @@
 import app/message.{type Message}
-import app/model.{type AuthState}
+import app/model.{type AuthState, type LogoutState, type SyncState}
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
@@ -10,6 +10,8 @@ pub fn view(
   auth: AuthState,
   auth_modal_open: Bool,
   settings_modal_open: Bool,
+  sync_state: SyncState,
+  logout_state: LogoutState,
 ) -> Element(Message) {
   html.div([], [
     html.link([
@@ -19,7 +21,13 @@ pub fn view(
     authenticated_user.stylesheet(),
     html.div([attribute.class("layout")], [
       html.div([attribute.class("layout__sidebar")], [
-        authenticated_user.view(auth, auth_modal_open, settings_modal_open),
+        authenticated_user.view(
+          auth,
+          auth_modal_open,
+          settings_modal_open,
+          sync_state,
+          logout_state,
+        ),
       ]),
       html.div([attribute.class("layout__content")], [content]),
     ]),

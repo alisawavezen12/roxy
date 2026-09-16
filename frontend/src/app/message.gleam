@@ -12,5 +12,9 @@ pub type Message {
   OpenSettingsModal
   CloseSettingsModal
   StartSsoLogin
+  SyncProfile
+  SyncFinished(auth.CurrentUserResult)
+  Logout
+  LogoutFinished(auth.LogoutResult)
   NoOp
 }

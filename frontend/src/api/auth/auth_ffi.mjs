@@ -6,6 +6,28 @@ export function loadCurrentUser(callback) {
     .catch(() => callback(0, ""));
 }
 
+export function syncProfile(callback) {
+  fetch(`${API_ORIGIN}/auth/sync`, {
+    method: "POST",
+    credentials: "include",
+  })
+    .then(async response => callback(response.status, await response.text()))
+    .catch(() => callback(0, ""));
+}
+
+export function logout(callback) {
+  fetch(`${API_ORIGIN}/auth/sso/logout`, {
+    method: "POST",
+    credentials: "include",
+  })
+    .then(response => callback(response.status))
+    .catch(() => callback(0));
+}
+
+export function alertUser(message) {
+  window.alert(message);
+}
+
 export function startSsoLogin() {
   const apiUrl = new URL(API_ORIGIN);
   const returnTo = new URL(window.location.href);

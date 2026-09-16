@@ -9,6 +9,7 @@ import gleam/string
 
 import transport/http/handlers/auth/me
 import transport/http/handlers/auth/sso
+import transport/http/handlers/auth/sync
 import transport/http/handlers/health
 import transport/http/handlers/readiness
 import transport/http/handlers/user as user_handler
@@ -48,6 +49,13 @@ const routes = [
     body: request_body.NoBody,
     access: access.Authenticated,
     handler: me_route,
+  ),
+  Route(
+    path: "/auth/sync",
+    methods: [http.Post],
+    body: request_body.NoBody,
+    access: access.Authenticated,
+    handler: sync_route,
   ),
   Route(
     path: "/auth/sso",
@@ -183,6 +191,15 @@ fn me_route(
   _body: request_body.ParsedBody,
 ) -> wisp.Response {
   me.handle(dependencies, context)
+}
+
+fn sync_route(
+  request: wisp.Request,
+  dependencies: dependencies.Dependencies,
+  context: transport_context.TransportContext,
+  _body: request_body.ParsedBody,
+) -> wisp.Response {
+  sync.handle(request, dependencies, context)
 }
 
 fn sso_start_route(

@@ -11,7 +11,7 @@ pub fn find(
 ) -> Result(Option(User), pog.QueryError) {
   let query =
     pog.query(
-      "select id, email, username, first_name, last_name, avatar_url, bio, to_char(external_created_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'), to_char(external_updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') from users where id = $1",
+      "select id, email, username, first_name, last_name, avatar_url, bio, to_char(created_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"'), to_char(updated_at, 'YYYY-MM-DD\"T\"HH24:MI:SS.MS\"Z\"') from users where id = $1",
     )
     |> pog.parameter(pog.text(id))
     |> pog.returning(user_decoder())

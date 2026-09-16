@@ -34,6 +34,12 @@
   overflow-wrap: anywhere;
 }
 
+.identity-panel__joined {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
 .identity-panel__bio {
   margin: var(--space-4) 0 0;
   color: var(--color-text-muted);

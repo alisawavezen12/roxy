@@ -1,5 +1,7 @@
 import app/message.{type Message}
+import gleam/list
 import gleam/option
+import gleam/string
 import lustre/attribute
 import lustre/element.{type Element}
 import lustre/element/html
@@ -19,7 +21,7 @@ pub fn view(profile: User) -> Element(Message) {
     html.p([attribute.class("identity-panel__handle")], [
       html.text(handle(profile)),
     ]),
-    ..bio(profile)
+    ..metadata(profile)
   ])
 }
 
@@ -39,6 +41,46 @@ pub fn avatar(profile: User) -> Element(message) {
         ],
         [html.text(user.avatar_letter(profile))],
       )
+  }
+}
+
+fn metadata(profile: User) -> List(Element(Message)) {
+  list.append(joined(profile), bio(profile))
+}
+
+fn joined(profile: User) -> List(Element(Message)) {
+  case profile.created_at {
+    option.Some(value) -> [
+      html.p([attribute.class("identity-panel__joined")], [
+        html.text("Joined " <> joined_month(value)),
+      ]),
+    ]
+    option.None -> []
+  }
+}
+
+fn joined_month(value: String) -> String {
+  case string.split(value, "-") {
+    [year, month, ..] -> month_name(month) <> " " <> year
+    _ -> value
+  }
+}
+
+fn month_name(value: String) -> String {
+  case value {
+    "01" -> "Jan"
+    "02" -> "Feb"
+    "03" -> "Mar"
+    "04" -> "Apr"
+    "05" -> "May"
+    "06" -> "Jun"
+    "07" -> "Jul"
+    "08" -> "Aug"
+    "09" -> "Sep"
+    "10" -> "Oct"
+    "11" -> "Nov"
+    "12" -> "Dec"
+    _ -> value
   }
 }
 

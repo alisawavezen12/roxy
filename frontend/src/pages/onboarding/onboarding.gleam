@@ -17,10 +17,10 @@ pub fn view(auth: AuthState) -> Element(Message) {
       html.p([attribute.class("onboarding__eyebrow")], [
         html.text("Welcome to Roxy"),
       ]),
-      html.h1([], [html.text("A calmer way to work together.")]),
+      html.h1([], [html.text("A place to express yourself.")]),
       html.p([attribute.class("onboarding__description")], [
         html.text(
-          "Roxy brings your conversations, ideas, and shared work into one simple space.",
+          "Roxy is a social network where you can share your ideas, showcase your creativity, and connect with people who inspire you.",
         ),
       ]),
       html.div([attribute.class("onboarding__actions")], [action(auth)]),
